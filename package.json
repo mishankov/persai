@@ -1,0 +1,53 @@
+{
+	"name": "persai",
+	"version": "0.0.1",
+	"devDependencies": {
+		"@ai-sdk/svelte": "^4.0.3",
+		"@eslint/compat": "^1.4.0",
+		"@eslint/js": "^9.39.1",
+		"@sveltejs/adapter-node": "^5.4.0",
+		"@sveltejs/kit": "^2.49.1",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@tailwindcss/forms": "^0.5.10",
+		"@tailwindcss/typography": "^0.5.19",
+		"@tailwindcss/vite": "^4.1.17",
+		"@types/node": "^22",
+		"ai": "^6.0.3",
+		"daisyui": "^5.5.14",
+		"eslint": "^9.39.1",
+		"eslint-config-prettier": "^10.1.8",
+		"eslint-plugin-svelte": "^3.13.1",
+		"globals": "^16.5.0",
+		"prettier": "^3.7.4",
+		"prettier-plugin-svelte": "^3.4.0",
+		"prettier-plugin-tailwindcss": "^0.7.2",
+		"svelte": "^5.45.6",
+		"svelte-check": "^4.3.4",
+		"tailwindcss": "^4.1.17",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.48.1",
+		"vite": "^7.2.6",
+		"zod": "^4.2.1"
+	},
+	"private": true,
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"format": "prettier --write .",
+		"lint": "prettier --check . && eslint ."
+	},
+	"type": "module",
+	"dependencies": {
+		"@ai-sdk/anthropic": "^3.0.1",
+		"@ai-sdk/deepseek": "^2.0.1",
+		"@ai-sdk/openai": "^3.0.1",
+		"@ai-sdk/openai-compatible": "^2.0.2",
+		"@openrouter/ai-sdk-provider": "^1.5.4",
+		"ollama-ai-provider-v2": "^2.0.0",
+		"svelte-exmarkdown": "^5.0.2"
+	}
+}
