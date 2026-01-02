@@ -52,8 +52,8 @@
 									<Markdown md={part.text} {plugins} />
 								</div>
 							</div>
-						{:else if part.type.startsWith('tool-show')}
-							<ExternalWidget link={part?.output?.link} />
+						{:else if part.type.startsWith('tool-show') && part?.output?.baseURL && part?.output?.link}
+							<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
 						{:else if part.type.startsWith('tool')}
 							<div class="badge badge-ghost">{'Вызвал тулзу ' + part.type}</div>
 						{/if}
