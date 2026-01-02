@@ -4,8 +4,9 @@
   "description": "Plugin server for PersAI - host multiple plugins in one Bun application",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/server.ts",
-    "build": "bun build src/server.ts --outdir dist",
+    "build:widgets": "bun run src/build.ts",
+    "dev": "bun run build:widgets && bun run src/server.ts",
+    "build": "bun run build:widgets && bun build src/server.ts --outdir dist",
     "start": "bun run dist/server.js"
   },
   "dependencies": {

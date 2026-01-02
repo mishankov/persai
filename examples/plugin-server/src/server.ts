@@ -1,6 +1,6 @@
 import { plugins } from './plugins';
 import type { PluginManifest } from './types';
-import { compileSvelteComponent } from './svelte-compiler';
+import { loadCompiledWidget } from './svelte-compiler';
 
 const PORT = process.env.PORT || 4444;
 
@@ -130,8 +130,8 @@ Bun.serve({
 
 					// Check if it's a Svelte component or a render function
 					if (widget.component) {
-						// Compile and render Svelte component
-						html = await compileSvelteComponent(widget.component, widget.props);
+						// Load pre-compiled Svelte widget
+						html = await loadCompiledWidget(pluginId, widgetId, widget.props);
 					} else if (widget.render) {
 						// Use render function
 						const content = await widget.render();

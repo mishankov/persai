@@ -6,10 +6,10 @@ A lightweight Bun + Svelte plugin server for PersAI. Host multiple plugins in a 
 
 ✅ **Multiple plugins in one server** - Install plugins as npm packages
 ✅ **Bun runtime** - Fast and lightweight
-✅ **Svelte support** - Use Svelte components for widgets (optional)
+✅ **Svelte 5 support** - Use Svelte components for widgets (optional)
+✅ **Build-time compilation** - Svelte widgets compiled at build time for best performance
 ✅ **Tailwind CSS + DaisyUI** - Pre-configured styling
 ✅ **TypeScript** - Full type safety
-✅ **Zero build for development** - Bun runs TS directly
 ✅ **Simple plugin interface** - Easy to create new plugins
 
 ## Quick Start
@@ -24,10 +24,13 @@ bun install
 ### 2. Run the Server
 
 ```bash
+# Build widgets and start server
 bun run dev
 ```
 
 Server runs on `http://localhost:4444`
+
+> **Note**: The `dev` script automatically builds Svelte widgets before starting the server. Widgets are compiled once and cached for fast server startup.
 
 ### 3. Test It
 
@@ -303,7 +306,8 @@ widgets: {
 - ✅ Component composition and reusability
 - ✅ Type-safe props
 - ✅ No manual DOM manipulation
-- ✅ Compiled at runtime (no build step needed)
+- ✅ Build-time compilation for optimal performance
+- ✅ Automatic compilation when running `bun run dev`
 
 ### Using Tailwind + DaisyUI
 
@@ -346,6 +350,55 @@ plugin-server/
 ├── Dockerfile
 └── README.md
 ```
+
+## Build Process
+
+The plugin server uses **build-time compilation** for Svelte widgets:
+
+### How It Works
+
+1. **Development**: When you run `bun run dev`, the build script:
+   - Scans all registered plugins for Svelte widgets
+   - Compiles each `.svelte` file using the Svelte compiler
+   - Saves compiled output to `.build/widgets/`
+   - Starts the server with pre-compiled widgets cached
+
+2. **Production**: When you run `bun run build`:
+   - Compiles all Svelte widgets
+   - Bundles the server code
+   - Output is ready for deployment
+
+### Build Commands
+
+```bash
+# Build Svelte widgets only
+bun run build:widgets
+
+# Build widgets + start dev server
+bun run dev
+
+# Build everything for production
+bun run build
+
+# Run production build
+bun run start
+```
+
+### Why Build-Time Compilation?
+
+- ✅ **Performance**: No compilation overhead on requests
+- ✅ **Error Detection**: Catches Svelte errors before runtime
+- ✅ **Predictability**: Same compiled output every time
+- ✅ **Fast Startup**: Server starts instantly with cached widgets
+
+### Adding a New Svelte Widget
+
+When you add a new Svelte widget to a plugin, the build script automatically:
+1. Detects it when you run `bun run dev`
+2. Compiles it to JavaScript
+3. Caches it for the server to use
+
+No manual build steps required!
 
 ## API Endpoints
 

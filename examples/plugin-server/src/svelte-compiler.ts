@@ -1,53 +1,52 @@
-import { compile } from 'svelte/compiler';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 interface CompiledWidget {
 	js: string;
 	css?: string;
+	props?: Record<string, any>;
 }
 
+const BUILD_DIR = join(import.meta.dir, '../.build/widgets');
 const compiledCache = new Map<string, CompiledWidget>();
 
 /**
- * Compile a Svelte component to JavaScript
+ * Load a pre-compiled Svelte widget
  */
-export async function compileSvelteComponent(
-	componentPath: string,
+export async function loadCompiledWidget(
+	pluginId: string,
+	widgetId: string,
 	props?: Record<string, any>
 ): Promise<string> {
-	const cacheKey = `${componentPath}:${JSON.stringify(props || {})}`;
+	const cacheKey = `${pluginId}-${widgetId}`;
 
 	// Check cache first
-	if (compiledCache.has(cacheKey)) {
-		const cached = compiledCache.get(cacheKey)!;
-		return generateWidgetHtml(cached, props);
+	if (!compiledCache.has(cacheKey)) {
+		// Load from build directory
+		const buildPath = join(BUILD_DIR, `${cacheKey}.json`);
+
+		if (!existsSync(buildPath)) {
+			throw new Error(
+				`Widget not found: ${pluginId}/${widgetId}. Did you run 'bun run build'?`
+			);
+		}
+
+		try {
+			const data = readFileSync(buildPath, 'utf-8');
+			const compiled: CompiledWidget = JSON.parse(data);
+			compiledCache.set(cacheKey, compiled);
+		} catch (error) {
+			console.error(`Error loading compiled widget ${cacheKey}:`, error);
+			throw error;
+		}
 	}
 
-	try {
-		// Read the Svelte component file
-		const source = readFileSync(componentPath, 'utf-8');
+	const compiled = compiledCache.get(cacheKey)!;
 
-		// Compile the component
-		const result = compile(source, {
-			generate: 'dom',
-			hydratable: false,
-			css: 'injected'
-		});
+	// Merge props (runtime props override build-time props)
+	const mergedProps = { ...compiled.props, ...props };
 
-		const compiled: CompiledWidget = {
-			js: result.js.code,
-			css: result.css?.code
-		};
-
-		// Cache the compiled result
-		compiledCache.set(cacheKey, compiled);
-
-		return generateWidgetHtml(compiled, props);
-	} catch (error) {
-		console.error(`Error compiling Svelte component ${componentPath}:`, error);
-		throw error;
-	}
+	return generateWidgetHtml(compiled, mergedProps);
 }
 
 /**
