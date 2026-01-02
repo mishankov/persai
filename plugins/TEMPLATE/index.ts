@@ -8,6 +8,18 @@ import type { Plugin } from '../../src/lib/plugins/types';
  * - AI tools that can be called by the LLM
  * - Optional widgets for displaying data
  * - Lifecycle hooks
+ *
+ * IMPORTANT NOTES:
+ *
+ * For LOCAL plugins:
+ * - Tools and logic go in this plugins/ directory ✓
+ * - Svelte widget files MUST be in src/routes/external/[plugin-id]/ (SvelteKit requirement)
+ * - The 'path' in widgets array should be the route path (e.g., '/external/my-plugin/widget')
+ *
+ * For EXTERNAL SERVICE plugins:
+ * - Everything can be in your external service
+ * - Widgets are served from your HTTP server
+ * - The 'path' is the full URL to your widget
  */
 
 const myPlugin: Plugin = {
@@ -20,7 +32,7 @@ const myPlugin: Plugin = {
 	description: 'This plugin does amazing things',
 	author: 'Your Name',
 
-	// AI Tools
+	// AI Tools (these live in this directory - works great!)
 	tools: [
 		{
 			name: 'myTool',
@@ -48,7 +60,8 @@ const myPlugin: Plugin = {
 			description: 'Display a widget to the user',
 			parameters: z.object({}),
 			execute: async () => {
-				// Return a link to your widget
+				// Return a link to your widget route
+				// Note: The widget Svelte file must be in src/routes/external/my-plugin/widget/+page.svelte
 				return {
 					link: '/external/my-plugin/widget'
 				};
@@ -56,13 +69,16 @@ const myPlugin: Plugin = {
 		}
 	],
 
-	// Optional: Widgets for UI display
+	// Optional: Widget metadata
+	// IMPORTANT: For local plugins, the actual .svelte file must be in:
+	//   src/routes/external/my-plugin/widget/+page.svelte
+	// This is a SvelteKit limitation - Svelte components must be in src/routes/
 	widgets: [
 		{
 			id: 'my-widget',
 			title: 'My Widget',
 			description: 'A widget that displays cool data',
-			path: './routes/widget/+page.svelte'
+			path: '/external/my-plugin/widget' // Route path, NOT file path
 		}
 	],
 

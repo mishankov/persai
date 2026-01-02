@@ -15,7 +15,7 @@ const nbaPlugin: Plugin = {
 			id: 'games-list',
 			title: 'NBA Games',
 			description: 'Display list of NBA games with scores',
-			path: './routes/games/+page.svelte'
+			path: '/external/nba/games' // Route in src/routes/external/nba/games/+page.svelte
 		}
 	],
 

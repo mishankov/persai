@@ -33,12 +33,20 @@ export interface PluginTool {
 
 /**
  * Widget definition for UI components
+ *
+ * IMPORTANT for local plugins:
+ * - Svelte widget files MUST be in src/routes/external/[plugin-id]/
+ * - The 'path' field should be the route path (e.g., '/external/nba/games')
+ * - Widgets cannot live in the plugins/ directory (SvelteKit limitation)
+ *
+ * For external/remote plugins:
+ * - The 'path' is the full URL to the widget (e.g., 'http://service:3001/widget')
  */
 export interface PluginWidget {
 	id: string;
 	title: string;
 	description?: string;
-	path: string; // For local plugins: relative path, for remote: full URL
+	path: string; // For local: route path (/external/...), for remote: full URL
 }
 
 /**
