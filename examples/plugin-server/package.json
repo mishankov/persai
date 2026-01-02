@@ -1,0 +1,27 @@
+{
+  "name": "persai-plugin-server",
+  "version": "1.0.0",
+  "description": "Plugin server for PersAI - host multiple plugins in one Bun application",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/server.ts",
+    "build": "bun build src/server.ts --outdir dist",
+    "start": "bun run dist/server.js"
+  },
+  "dependencies": {
+    "daisyui": "^5.5.14"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "svelte": "^5.45.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6"
+  },
+  "keywords": [
+    "persai",
+    "plugin-server",
+    "bun",
+    "svelte"
+  ]
+}
