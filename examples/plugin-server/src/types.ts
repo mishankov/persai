@@ -28,7 +28,10 @@ export interface ParameterDefinition {
 export interface PluginWidget {
 	title: string;
 	description?: string;
-	render: (data?: any) => string | Promise<string>;
+	// Can be either a render function returning HTML or a Svelte component
+	render?: (data?: any) => string | Promise<string>;
+	component?: string; // Path to .svelte file (relative to plugin)
+	props?: Record<string, any>; // Props to pass to Svelte component
 }
 
 /**

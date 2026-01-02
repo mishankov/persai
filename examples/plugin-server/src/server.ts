@@ -1,5 +1,6 @@
 import { plugins } from './plugins';
 import type { PluginManifest } from './types';
+import { compileSvelteComponent } from './svelte-compiler';
 
 const PORT = process.env.PORT || 4444;
 
@@ -125,9 +126,24 @@ Bun.serve({
 						return new Response('Widget not found', { status: 404, headers });
 					}
 
-					const html = await widget.render();
+					let html: string;
 
-					return new Response(wrapWidgetHtml(html, widget.title), {
+					// Check if it's a Svelte component or a render function
+					if (widget.component) {
+						// Compile and render Svelte component
+						html = await compileSvelteComponent(widget.component, widget.props);
+					} else if (widget.render) {
+						// Use render function
+						const content = await widget.render();
+						html = wrapWidgetHtml(content, widget.title);
+					} else {
+						return new Response('Widget has no render function or component', {
+							status: 500,
+							headers
+						});
+					}
+
+					return new Response(html, {
 						headers: {
 							...headers,
 							'Content-Type': 'text/html; charset=utf-8'

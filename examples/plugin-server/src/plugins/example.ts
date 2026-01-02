@@ -1,4 +1,5 @@
 import type { PluginDefinition } from '../types';
+import { join } from 'path';
 
 /**
  * Example Plugin
@@ -114,6 +115,24 @@ const examplePlugin: PluginDefinition = {
 						</div>
 					</div>
 				`;
+			}
+		},
+
+		// Example Svelte widget: counter
+		counter: {
+			title: 'Interactive Counter',
+			description: 'A reactive Svelte counter widget',
+			component: join(import.meta.dir, 'widgets/Counter.svelte')
+		},
+
+		// Example Svelte widget with props: welcome
+		welcome: {
+			title: 'Welcome Message',
+			description: 'A Svelte widget that accepts props',
+			component: join(import.meta.dir, 'widgets/Welcome.svelte'),
+			props: {
+				name: 'Plugin Developer',
+				message: 'You can pass props to Svelte widgets!'
 			}
 		}
 	}

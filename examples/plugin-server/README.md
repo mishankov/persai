@@ -199,11 +199,15 @@ tools: {
 
 ### Widgets
 
+Widgets can be created in **two ways**:
+
+#### Option 1: HTML Render Function
+
 ```typescript
 interface PluginWidget {
-  title: string;                           // Widget title
-  description?: string;                    // Widget description
-  render: (data?: any) => string | Promise<string>;  // Render function
+  title: string;
+  description?: string;
+  render: (data?: any) => string | Promise<string>;
 }
 ```
 
@@ -237,6 +241,70 @@ widgets: {
 }
 ```
 
+#### Option 2: Svelte Components (Recommended)
+
+```typescript
+interface PluginWidget {
+  title: string;
+  description?: string;
+  component: string;                // Path to .svelte file
+  props?: Record<string, any>;      // Props to pass to component
+}
+```
+
+**Example:**
+
+```typescript
+import { join } from 'path';
+
+widgets: {
+  counter: {
+    title: 'Interactive Counter',
+    description: 'A reactive counter',
+    component: join(import.meta.dir, 'widgets/Counter.svelte')
+  },
+
+  welcome: {
+    title: 'Welcome',
+    component: join(import.meta.dir, 'widgets/Welcome.svelte'),
+    props: {
+      name: 'Developer',
+      message: 'Hello from Svelte!'
+    }
+  }
+}
+```
+
+**Svelte Component Example (`widgets/Counter.svelte`):**
+
+```svelte
+<script>
+  let count = $state(0);
+
+  function increment() {
+    count++;
+  }
+</script>
+
+<div class="container mx-auto p-4">
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">Counter: {count}</h2>
+      <button class="btn btn-primary" onclick={increment}>
+        Increment
+      </button>
+    </div>
+  </div>
+</div>
+```
+
+**Benefits of Svelte Widgets:**
+- ✅ Full reactivity with Svelte 5 runes (`$state`, `$derived`, etc.)
+- ✅ Component composition and reusability
+- ✅ Type-safe props
+- ✅ No manual DOM manipulation
+- ✅ Compiled at runtime (no build step needed)
+
 ### Using Tailwind + DaisyUI
 
 Widgets automatically have Tailwind CSS and DaisyUI available:
@@ -266,11 +334,16 @@ plugin-server/
 ├── src/
 │   ├── server.ts              # Main server
 │   ├── types.ts               # TypeScript types
+│   ├── svelte-compiler.ts     # Svelte compilation logic
 │   └── plugins/
 │       ├── index.ts           # Plugin registry
-│       └── example.ts         # Example plugin
+│       ├── example.ts         # Example plugin
+│       └── widgets/           # Svelte components
+│           ├── Counter.svelte
+│           └── Welcome.svelte
 ├── package.json
 ├── tailwind.config.js         # Tailwind configuration
+├── Dockerfile
 └── README.md
 ```
 
