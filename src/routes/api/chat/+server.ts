@@ -1,13 +1,13 @@
 import { type UIMessage, convertToModelMessages, stepCountIs, tool, ToolLoopAgent } from 'ai';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { z } from 'zod';
-import { getScoreboard } from './api';
 
 import { DEEPSEEK_API_KEY, OPENROUTER_API_KEY, YANDEX_API_KEY } from '$env/static/private';
 import { createOpenAI, openai } from '@ai-sdk/openai';
 import { createOllama, ollama } from 'ollama-ai-provider-v2';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { pluginLoader } from '$lib/plugins';
 
 const getModel = () => {
 	return {
@@ -44,53 +44,41 @@ const getModel = () => {
 	}.orXiaomi;
 };
 
-const tools = {
-	// general tools
-	webfetch: tool({
-		description: 'fetches data from web by link',
-		inputSchema: z.object({
-			link: z.string()
-		}),
-		execute: async ({ link }) => {
-			console.log('webfetch called with', link);
-			const response = await fetch(link);
-			const text = await response.text();
-			return text;
-		}
-	}),
-	getGames: tool({
-		description: 'Получить расписание и результаты сегодняшних матчей НБА',
-		inputSchema: z.object().describe('Пустой объект'),
-		execute: async () => {
-			console.log('getGames called');
-			const scoreboard = await getScoreboard();
+// Load plugins on server startup
+await pluginLoader.loadPlugins();
 
-			return scoreboard.events;
-		}
-	}),
-	showGames: tool({
-		description:
-			'Показывает пользователю список сегодняшних игр НБА с их результатами, если игры уже прошли. Всегдя используй этот тул, если пользователь спрашивает о всех сегодняшних играх. Не подходит для отображения информации об одной игре',
-		inputSchema: z.object().describe('Пустой объект'),
-		execute: async () => {
-			console.log('showGames called');
+// Build tools object from plugins
+const buildTools = () => {
+	const tools: Record<string, any> = {
+		// Core tools that are always available
+		webfetch: tool({
+			description: 'fetches data from web by link',
+			inputSchema: z.object({
+				link: z.string()
+			}),
+			execute: async ({ link }) => {
+				console.log('webfetch called with', link);
+				const response = await fetch(link);
+				const text = await response.text();
+				return text;
+			}
+		})
+	};
 
-			return { link: '/external/nba/games' };
-		}
-	}),
-	showGame: tool({
-		description:
-			'Показывает пользователю результаты конкретной игры НБА. Всегдя используй этот тул, если пользователь спрашивает о конкретной игре',
-		inputSchema: z.object({
-			gameId: z.string()
-		}),
-		execute: async ({ gameId }) => {
-			console.log('showGame called for', gameId);
+	// Add tools from plugins
+	const pluginTools = pluginLoader.getAllTools();
+	for (const pluginTool of pluginTools) {
+		tools[pluginTool.name] = tool({
+			description: pluginTool.description,
+			inputSchema: pluginTool.parameters,
+			execute: pluginTool.execute
+		});
+	}
 
-			return { link: 'http://link.to/showGame/' + gameId };
-		}
-	})
+	return tools;
 };
+
+const tools = buildTools();
 
 const sheduleAgent = new ToolLoopAgent({
 	model: getModel(),
