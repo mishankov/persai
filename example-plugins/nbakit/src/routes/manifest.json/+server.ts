@@ -1,5 +1,3 @@
-import { getScoreboard } from './api';
-
 const tools = {
 	getGames: {
 		type: 'data',
@@ -22,26 +20,6 @@ const plugin = {
 	tools: tools
 };
 
-const server = Bun.serve({
-	routes: {
-		'/manifest.json': Response.json(plugin),
-		'/api/getGames': {
-			POST: async () => {
-				console.log('getGames invoked');
-
-				const data = await getScoreboard();
-				return Response.json(data);
-			}
-		},
-		'/api/showGames': {
-			POST: async () => {
-				console.log('showGames invoked');
-				return Response.json({ link: '/games' });
-			}
-		},
-		'/games': () => new Response(Bun.file('games.html'))
-	},
-	port: 4444
-});
-
-console.log(`Server started ${server.url}`);
+export async function GET() {
+	return Response.json(plugin);
+}
