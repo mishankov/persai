@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
-	import { getScoreboard } from '../../../../../plugins/nba/api';
+	import { getScoreboard } from '../../api';
 
 	let games = $state<any[]>([]);
 	let loading = $state(true);
