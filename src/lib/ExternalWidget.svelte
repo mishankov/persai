@@ -10,7 +10,7 @@
 	};
 </script>
 
-<div class="card h-96 w-96 bg-primary text-primary-content shadow-xl">
+<div class="card h-96 w-96 bg-primary pr-2 pb-2 pl-2 text-primary-content shadow-xl">
 	<div class="card-title justify-center text-sm">
 		Widget
 		<button class="btn btn-sm btn-primary" onclick={openFullScreen}>Open full screen</button>
