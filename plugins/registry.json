@@ -1,12 +1,3 @@
 {
-  "plugins": [
-    {
-      "id": "nba",
-      "type": "local",
-      "path": "./plugins/nba",
-      "enabled": true,
-      "name": "NBA Games",
-      "version": "1.0.0"
-    }
-  ]
+  "plugins": []
 }

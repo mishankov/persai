@@ -1,16 +1,39 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
-import type {
-	Plugin,
-	PluginConfig,
-	PluginRegistry,
-	RemotePluginManifest,
-	PluginTool
-} from './types';
+import type { PluginConfig, PluginRegistry, PluginManifest } from './types';
+
+/**
+ * Loaded plugin with executable tools
+ */
+export interface LoadedPlugin {
+	id: string;
+	name: string;
+	version: string;
+	description?: string;
+	author?: string;
+	url: string;
+	tools: LoadedTool[];
+	widgets: LoadedWidget[];
+}
+
+export interface LoadedTool {
+	name: string;
+	description: string;
+	parameters: z.ZodSchema;
+	execute: (params: any) => Promise<any>;
+}
+
+export interface LoadedWidget {
+	id: string;
+	title: string;
+	description?: string;
+	url: string; // Full URL to widget
+	pluginId: string;
+}
 
 export class PluginLoader {
-	private plugins = new Map<string, Plugin>();
+	private plugins = new Map<string, LoadedPlugin>();
 	private configs: PluginConfig[] = [];
 	private registryPath: string;
 
@@ -28,12 +51,18 @@ export class PluginLoader {
 				console.warn(`Plugin registry not found at ${this.registryPath}`);
 				console.log('Creating default registry...');
 				await this.createDefaultRegistry();
+				return;
 			}
 
 			// Read registry
 			const registryContent = readFileSync(this.registryPath, 'utf-8');
 			const registry: PluginRegistry = JSON.parse(registryContent);
 			this.configs = registry.plugins;
+
+			if (this.configs.length === 0) {
+				console.log('🔌 No plugins configured');
+				return;
+			}
 
 			console.log(`\n🔌 Loading ${this.configs.length} plugin(s)...`);
 
@@ -45,11 +74,7 @@ export class PluginLoader {
 				}
 
 				try {
-					if (config.type === 'local') {
-						await this.loadLocalPlugin(config);
-					} else {
-						await this.loadRemotePlugin(config);
-					}
+					await this.loadHttpPlugin(config);
 				} catch (error) {
 					console.error(`❌ Failed to load plugin ${config.id}:`, error);
 				}
@@ -63,55 +88,14 @@ export class PluginLoader {
 	}
 
 	/**
-	 * Load a local (in-process) plugin
+	 * Load an HTTP-based plugin
 	 */
-	private async loadLocalPlugin(config: PluginConfig): Promise<void> {
-		if (!config.path) {
-			throw new Error(`Local plugin ${config.id} missing path`);
-		}
-
-		const pluginPath = join(process.cwd(), config.path);
-		const pluginEntryPoint = join(pluginPath, 'index.ts');
-
-		if (!existsSync(pluginEntryPoint)) {
-			throw new Error(`Plugin entry point not found: ${pluginEntryPoint}`);
-		}
-
-		// Dynamic import (works with Bun and Node.js)
-		const module = await import(pluginEntryPoint);
-		const plugin: Plugin = module.default;
-
-		// Validate plugin
-		if (!plugin) {
-			throw new Error(`Plugin ${config.id} did not export a default plugin object`);
-		}
-
-		if (plugin.id !== config.id) {
-			throw new Error(
-				`Plugin ID mismatch: expected ${config.id}, got ${plugin.id}`
-			);
-		}
-
-		// Call lifecycle hook
-		if (plugin.onLoad) {
-			await plugin.onLoad();
-		}
-
-		this.plugins.set(plugin.id, plugin);
-		console.log(
-			`✓ ${plugin.name} v${plugin.version} (${plugin.tools?.length || 0} tools, ${plugin.widgets?.length || 0} widgets)`
-		);
-	}
-
-	/**
-	 * Load a remote plugin via HTTP API
-	 */
-	private async loadRemotePlugin(config: PluginConfig): Promise<void> {
+	private async loadHttpPlugin(config: PluginConfig): Promise<void> {
 		if (!config.url) {
-			throw new Error(`Remote plugin ${config.id} missing url`);
+			throw new Error(`Plugin ${config.id} missing url`);
 		}
 
-		// Fetch manifest from remote URL
+		// Fetch manifest from plugin service
 		const manifestUrl = `${config.url}/manifest.json`;
 
 		try {
@@ -125,21 +109,22 @@ export class PluginLoader {
 				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 			}
 
-			const manifest: RemotePluginManifest = await response.json();
+			const manifest: PluginManifest = await response.json();
 
-			// Create proxy plugin that calls remote API
-			const plugin: Plugin = {
+			// Create loaded plugin with HTTP proxies
+			const plugin: LoadedPlugin = {
 				id: config.id,
-				name: manifest.name,
-				version: manifest.version,
+				name: config.name || manifest.name,
+				version: config.version || manifest.version,
 				description: manifest.description,
 				author: manifest.author,
+				url: config.url,
 				tools: manifest.tools?.map((tool) => ({
 					name: tool.name,
 					description: tool.description,
 					parameters: this.convertJsonSchemaToZod(tool.parameters),
 					execute: async (params: any) => {
-						// Call remote API
+						// Call remote tool endpoint
 						const toolUrl = `${config.url}${tool.endpoint}`;
 						const res = await fetch(toolUrl, {
 							method: 'POST',
@@ -151,61 +136,61 @@ export class PluginLoader {
 						});
 
 						if (!res.ok) {
-							throw new Error(`Remote tool failed: ${res.status} ${res.statusText}`);
+							throw new Error(`Tool ${tool.name} failed: ${res.status} ${res.statusText}`);
 						}
 
 						return res.json();
 					}
-				})),
+				})) || [],
 				widgets: manifest.widgets?.map((w) => ({
 					id: w.id,
 					title: w.title,
 					description: w.description,
-					path: `${config.url}${w.url}` // Full URL for remote widgets
-				}))
+					url: `${config.url}${w.url}`, // Full URL to widget
+					pluginId: config.id
+				})) || []
 			};
 
 			this.plugins.set(plugin.id, plugin);
 			console.log(
-				`✓ ${plugin.name} v${plugin.version} [remote] (${plugin.tools?.length || 0} tools, ${plugin.widgets?.length || 0} widgets)`
+				`✓ ${plugin.name} v${plugin.version} (${plugin.tools.length} tools, ${plugin.widgets.length} widgets)`
 			);
 		} catch (error) {
-			throw new Error(`Failed to fetch remote plugin manifest: ${error}`);
+			throw new Error(`Failed to fetch manifest from ${manifestUrl}: ${error}`);
 		}
 	}
 
 	/**
 	 * Convert JSON Schema to Zod schema (simplified)
+	 * TODO: Implement full JSON Schema to Zod conversion
 	 */
 	private convertJsonSchemaToZod(jsonSchema: any): z.ZodSchema {
-		// For now, accept any object
-		// TODO: Implement full JSON Schema to Zod conversion
+		// For now, accept any params
+		// In production, you'd want proper JSON Schema -> Zod conversion
 		return z.any();
 	}
 
 	/**
 	 * Get a specific plugin by ID
 	 */
-	getPlugin(id: string): Plugin | undefined {
+	getPlugin(id: string): LoadedPlugin | undefined {
 		return this.plugins.get(id);
 	}
 
 	/**
 	 * Get all loaded plugins
 	 */
-	getAllPlugins(): Plugin[] {
+	getAllPlugins(): LoadedPlugin[] {
 		return Array.from(this.plugins.values());
 	}
 
 	/**
 	 * Get all tools from all loaded plugins
 	 */
-	getAllTools(): PluginTool[] {
-		const tools: PluginTool[] = [];
+	getAllTools(): LoadedTool[] {
+		const tools: LoadedTool[] = [];
 		for (const plugin of this.plugins.values()) {
-			if (plugin.tools) {
-				tools.push(...plugin.tools);
-			}
+			tools.push(...plugin.tools);
 		}
 		return tools;
 	}
@@ -213,17 +198,10 @@ export class PluginLoader {
 	/**
 	 * Get all widgets from all loaded plugins
 	 */
-	getAllWidgets() {
-		const widgets: Array<Plugin['widgets'][number] & { pluginId: string }> = [];
+	getAllWidgets(): LoadedWidget[] {
+		const widgets: LoadedWidget[] = [];
 		for (const plugin of this.plugins.values()) {
-			if (plugin.widgets) {
-				widgets.push(
-					...plugin.widgets.map((w) => ({
-						...w,
-						pluginId: plugin.id
-					}))
-				);
-			}
+			widgets.push(...plugin.widgets);
 		}
 		return widgets;
 	}
@@ -232,15 +210,7 @@ export class PluginLoader {
 	 * Reload all plugins
 	 */
 	async reload(): Promise<void> {
-		// Unload all plugins
-		for (const plugin of this.plugins.values()) {
-			if (plugin.onUnload) {
-				await plugin.onUnload();
-			}
-		}
 		this.plugins.clear();
-
-		// Reload
 		await this.loadPlugins();
 	}
 

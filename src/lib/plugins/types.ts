@@ -1,70 +1,55 @@
-import type { z } from 'zod';
-
 /**
- * Plugin definition interface
+ * Plugin manifest structure (returned by GET /manifest.json)
  */
-export interface Plugin {
+export interface PluginManifest {
 	id: string;
 	name: string;
 	version: string;
 	description?: string;
 	author?: string;
-
-	// AI Tools provided by the plugin
-	tools?: PluginTool[];
-
-	// Widgets provided by the plugin
-	widgets?: PluginWidget[];
-
-	// Lifecycle hooks
-	onLoad?: () => Promise<void> | void;
-	onUnload?: () => Promise<void> | void;
+	tools?: ToolDefinition[];
+	widgets?: WidgetDefinition[];
 }
 
 /**
- * Tool definition for AI integration
+ * Tool definition in plugin manifest
  */
-export interface PluginTool {
+export interface ToolDefinition {
 	name: string;
 	description: string;
-	parameters: z.ZodSchema;
-	execute: (params: any) => Promise<any>;
+	endpoint: string; // e.g., "/api/tools/getGames"
+	parameters: any; // JSON Schema
 }
 
 /**
- * Widget definition for UI components
- *
- * IMPORTANT for local plugins:
- * - Svelte widget files MUST be in src/routes/external/[plugin-id]/
- * - The 'path' field should be the route path (e.g., '/external/nba/games')
- * - Widgets cannot live in the plugins/ directory (SvelteKit limitation)
- *
- * For external/remote plugins:
- * - The 'path' is the full URL to the widget (e.g., 'http://service:3001/widget')
+ * Widget definition in plugin manifest
  */
-export interface PluginWidget {
+export interface WidgetDefinition {
 	id: string;
 	title: string;
+	url: string; // e.g., "/widgets/games"
 	description?: string;
-	path: string; // For local: route path (/external/...), for remote: full URL
 }
 
 /**
  * Plugin configuration from registry
+ *
+ * All plugins are HTTP-based services that expose:
+ * - GET /manifest.json - Plugin metadata and capabilities
+ * - POST /api/tools/{toolName} - Tool execution endpoints
+ * - GET /widgets/{widgetId} - Widget pages (served as HTML/iframe)
  */
 export interface PluginConfig {
 	id: string;
-	type: 'local' | 'external' | 'remote';
 	enabled: boolean;
 
-	// For local plugins
-	path?: string;
+	// Plugin service URL
+	url: string;
 
-	// For external/remote plugins
-	url?: string;
+	// Optional API key for authentication
 	apiKey?: string;
 
-	// Optional metadata
+	// Optional metadata (can override manifest)
 	name?: string;
 	version?: string;
 }
@@ -74,31 +59,4 @@ export interface PluginConfig {
  */
 export interface PluginRegistry {
 	plugins: PluginConfig[];
-}
-
-/**
- * Remote plugin manifest structure
- */
-export interface RemotePluginManifest {
-	id: string;
-	name: string;
-	version: string;
-	description?: string;
-	author?: string;
-	tools?: RemoteToolDefinition[];
-	widgets?: RemoteWidgetDefinition[];
-}
-
-export interface RemoteToolDefinition {
-	name: string;
-	description: string;
-	endpoint: string;
-	parameters: any; // JSON schema
-}
-
-export interface RemoteWidgetDefinition {
-	id: string;
-	title: string;
-	url: string;
-	description?: string;
 }

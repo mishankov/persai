@@ -1,11 +1,9 @@
 export { PluginLoader, pluginLoader } from './loader';
 export type {
-	Plugin,
 	PluginConfig,
 	PluginRegistry,
-	PluginTool,
-	PluginWidget,
-	RemotePluginManifest,
-	RemoteToolDefinition,
-	RemoteWidgetDefinition
+	PluginManifest,
+	ToolDefinition,
+	WidgetDefinition
 } from './types';
+export type { LoadedPlugin, LoadedTool, LoadedWidget } from './loader';

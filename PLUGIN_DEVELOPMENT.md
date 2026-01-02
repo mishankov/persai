@@ -1,457 +1,660 @@
 # PersAI Plugin Development Guide
 
-This guide explains how to create plugins for PersAI, a self-hosted personal AI assistant.
+Create plugins for PersAI - HTTP-based services that extend the AI's capabilities.
 
 ## Overview
 
-PersAI supports a flexible plugin system that allows third-party developers to extend the AI's capabilities with:
-- **AI Tools**: Functions the LLM can call to fetch data or perform actions
-- **Widgets**: UI components to display data to users
-- **Lifecycle Hooks**: Code that runs when plugins load/unload
+PersAI plugins are **standalone HTTP services** that can:
+- **Provide AI tools** - Functions the LLM can call
+- **Serve widgets** - UI components displayed via iframe
+- **Use any technology** - Python, Go, Rust, Bun, whatever you want
 
-## Plugin Types
+## Quick Start
 
-### 1. Local Plugins (In-Process)
-- Written in TypeScript/JavaScript (Bun/Node.js compatible)
-- Run in the same process as PersAI
-- Fast, no network overhead
-- **Best for**: Lightweight tools, data transformations, simple API calls
-
-### 2. External Service Plugins
-- Separate HTTP service (any language)
-- Communicate via REST API
-- **Best for**: Heavy computations, different tech stacks, isolated services
-
-### 3. Remote/SaaS Plugins
-- Hosted by third parties
-- Users connect via API key
-- **Best for**: Paid services, managed infrastructure
-
-## Creating a Local Plugin
-
-### Quick Start
-
-1. **Copy the template:**
-   ```bash
-   cp -r plugins/TEMPLATE plugins/my-plugin
-   cd plugins/my-plugin
-   ```
-
-2. **Edit `package.json`:**
-   ```json
-   {
-     "name": "@persai-plugins/my-plugin",
-     "version": "1.0.0",
-     "description": "My awesome plugin",
-     "author": "Your Name"
-   }
-   ```
-
-3. **Edit `index.ts`:**
-   ```typescript
-   import { z } from 'zod';
-   import type { Plugin } from '../../src/lib/plugins/types';
-
-   const myPlugin: Plugin = {
-     id: 'my-plugin',
-     name: 'My Plugin',
-     version: '1.0.0',
-
-     tools: [
-       {
-         name: 'myTool',
-         description: 'What this tool does',
-         parameters: z.object({
-           input: z.string()
-         }),
-         execute: async ({ input }) => {
-           // Your logic here
-           return { result: 'success' };
-         }
-       }
-     ]
-   };
-
-   export default myPlugin;
-   ```
-
-4. **Register the plugin:**
-   Edit `plugins/registry.json`:
-   ```json
-   {
-     "plugins": [
-       {
-         "id": "my-plugin",
-         "type": "local",
-         "path": "./plugins/my-plugin",
-         "enabled": true
-       }
-     ]
-   }
-   ```
-
-5. **Restart PersAI:**
-   ```bash
-   bun run dev
-   ```
-
-## Plugin Structure
-
-### Directory Layout
-
-```
-plugins/my-plugin/
-├── package.json           # Plugin metadata
-├── index.ts              # Plugin entry point (required)
-├── tools.ts              # Tool definitions (optional)
-├── api.ts                # API clients (optional)
-└── routes/               # Widget routes (optional)
-    └── widget/
-        └── +page.svelte
-```
-
-### Plugin Interface
+### 1. Create an HTTP Service
 
 ```typescript
-interface Plugin {
-  // Required
-  id: string;                    // Unique identifier
-  name: string;                  // Display name
-  version: string;               // Semantic version
+// server.ts (using Bun)
+Bun.serve({
+  port: 3001,
+  async fetch(req) {
+    const url = new URL(req.url);
 
-  // Optional
-  description?: string;
-  author?: string;
-  tools?: PluginTool[];
-  widgets?: PluginWidget[];
-  onLoad?: () => Promise<void> | void;
-  onUnload?: () => Promise<void> | void;
-}
-```
+    // Required: Manifest endpoint
+    if (url.pathname === '/manifest.json') {
+      return Response.json({
+        id: 'weather',
+        name: 'Weather Plugin',
+        version: '1.0.0',
+        description: 'Get weather information',
+        tools: [
+          {
+            name: 'getWeather',
+            description: 'Get current weather for a city',
+            endpoint: '/api/tools/getWeather',
+            parameters: {
+              type: 'object',
+              properties: {
+                city: { type: 'string', description: 'City name' }
+              },
+              required: ['city']
+            }
+          }
+        ],
+        widgets: [
+          {
+            id: 'forecast',
+            title: 'Weather Forecast',
+            url: '/widgets/forecast'
+          }
+        ]
+      });
+    }
 
-## Creating AI Tools
+    // Tool endpoint
+    if (url.pathname === '/api/tools/getWeather') {
+      const { city } = await req.json();
 
-Tools are functions the LLM can call to extend its capabilities.
+      // Your logic here
+      const weather = await fetchWeatherData(city);
 
-### Tool Interface
+      return Response.json({
+        temperature: weather.temp,
+        conditions: weather.conditions
+      });
+    }
 
-```typescript
-interface PluginTool {
-  name: string;                  // Unique tool name
-  description: string;           // What the tool does (AI reads this)
-  parameters: z.ZodSchema;       // Zod schema for parameters
-  execute: (params: any) => Promise<any>;  // Tool implementation
-}
-```
+    // Widget endpoint
+    if (url.pathname === '/widgets/forecast') {
+      return new Response(`
+        <html>
+          <body>
+            <h1>Weather Forecast</h1>
+            <div id="forecast"></div>
+            <script>
+              // Your widget code
+            </script>
+          </body>
+        </html>
+      `, {
+        headers: { 'Content-Type': 'text/html' }
+      });
+    }
 
-### Example: Weather Tool
-
-```typescript
-import { z } from 'zod';
-
-const weatherTool: PluginTool = {
-  name: 'getWeather',
-  description: 'Get current weather for a city',
-  parameters: z.object({
-    city: z.string().describe('City name'),
-    units: z.enum(['celsius', 'fahrenheit']).optional()
-  }),
-  execute: async ({ city, units = 'celsius' }) => {
-    const apiKey = process.env.WEATHER_API_KEY;
-    const response = await fetch(
-      `https://api.weather.com/v1/current?city=${city}&units=${units}&key=${apiKey}`
-    );
-    const data = await response.json();
-
-    return {
-      temperature: data.temp,
-      conditions: data.conditions,
-      humidity: data.humidity
-    };
+    return new Response('Not found', { status: 404 });
   }
-};
+});
+
+console.log('Weather plugin running on http://localhost:3001');
 ```
 
-### Tool Best Practices
+### 2. Test Your Plugin
 
-1. **Clear descriptions**: The AI uses these to decide when to call your tool
-2. **Validate inputs**: Use Zod schemas to ensure correct parameters
-3. **Error handling**: Return useful error messages
-4. **Return structured data**: Use objects, not just strings
-5. **Log calls**: Use `console.log()` for debugging
+```bash
+# Start your plugin
+bun run server.ts
 
-## Creating Widgets
+# Test manifest
+curl http://localhost:3001/manifest.json
 
-Widgets are UI components that display data to users.
-
-### Widget Interface
-
-```typescript
-interface PluginWidget {
-  id: string;                    // Unique widget identifier
-  title: string;                 // Display title
-  description?: string;
-  path: string;                  // Relative path to .svelte file
-}
+# Test tool
+curl -X POST http://localhost:3001/api/tools/getWeather \
+  -H "Content-Type: application/json" \
+  -d '{"city":"London"}'
 ```
 
-### Example Widget
+### 3. Register in PersAI
 
-```typescript
-// In your plugin's index.ts
-widgets: [
-  {
-    id: 'weather-display',
-    title: 'Weather',
-    description: 'Current weather conditions',
-    path: './routes/weather/+page.svelte'
-  }
-]
-```
-
-### Widget Component
-
-Create `routes/weather/+page.svelte`:
-
-```svelte
-<script lang="ts">
-  import { onMount } from 'svelte';
-  import { page } from '$app/stores';
-
-  let weather = $state(null);
-  let loading = $state(true);
-
-  const isWidget = $derived($page.url.searchParams.get('target') === 'widget');
-
-  onMount(async () => {
-    const response = await fetch('/api/weather');
-    weather = await response.json();
-    loading = false;
-  });
-</script>
-
-{#if isWidget}
-  <!-- Compact widget view -->
-  <div class="p-2">
-    <div class="text-sm">{weather?.temp}°C</div>
-  </div>
-{:else}
-  <!-- Full-screen view -->
-  <div class="container mx-auto p-4">
-    <h1>Weather</h1>
-    <div class="text-2xl">{weather?.temp}°C</div>
-  </div>
-{/if}
-```
-
-### Showing Widgets
-
-Create a tool that returns a widget link:
-
-```typescript
-{
-  name: 'showWeather',
-  description: 'Display weather widget',
-  parameters: z.object({}),
-  execute: async () => {
-    return { link: '/external/weather/display' };
-  }
-}
-```
-
-## Lifecycle Hooks
-
-### onLoad
-
-Called when the plugin is loaded:
-
-```typescript
-onLoad: async () => {
-  console.log('Plugin loaded');
-  // Initialize database connections
-  // Start background tasks
-  // Validate configuration
-}
-```
-
-### onUnload
-
-Called when the plugin is unloaded:
-
-```typescript
-onUnload: async () => {
-  console.log('Plugin unloaded');
-  // Close connections
-  // Stop background tasks
-  // Cleanup resources
-}
-```
-
-## Creating External Service Plugins
-
-For plugins in other languages (Python, Go, Rust, etc.), create an HTTP service.
-
-### Service Requirements
-
-1. **Manifest endpoint**: `GET /manifest.json`
-2. **Tool endpoints**: As defined in manifest
-
-### Manifest Format
-
+Edit `plugins/registry.json`:
 ```json
 {
-  "id": "my-service",
-  "name": "My Service Plugin",
-  "version": "1.0.0",
-  "description": "Does cool things",
-  "tools": [
+  "plugins": [
     {
-      "name": "myTool",
-      "description": "What it does",
-      "endpoint": "/api/tools/my-tool",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "input": { "type": "string" }
-        }
-      }
-    }
-  ],
-  "widgets": [
-    {
-      "id": "my-widget",
-      "title": "My Widget",
-      "url": "/widget/display"
+      "id": "weather",
+      "enabled": true,
+      "url": "http://localhost:3001"
     }
   ]
+}
+```
+
+### 4. Restart PersAI
+
+```bash
+bun run dev
+```
+
+Your plugin is now available to the AI!
+
+---
+
+## Plugin Manifest
+
+The manifest endpoint (`GET /manifest.json`) describes your plugin:
+
+```typescript
+interface PluginManifest {
+  id: string;              // Unique identifier
+  name: string;            // Display name
+  version: string;         // Semantic version
+  description?: string;    // What your plugin does
+  author?: string;         // Your name
+  tools?: ToolDefinition[];
+  widgets?: WidgetDefinition[];
+}
+```
+
+---
+
+## Creating Tools
+
+Tools are functions the AI can call to extend its capabilities.
+
+### Tool Definition
+
+```typescript
+interface ToolDefinition {
+  name: string;           // Tool identifier
+  description: string;    // What it does (AI reads this!)
+  endpoint: string;       // POST endpoint path
+  parameters: object;     // JSON Schema for parameters
 }
 ```
 
 ### Tool Endpoint
 
-```python
-# Example in Python/Flask
-@app.post('/api/tools/my-tool')
-def my_tool():
-    data = request.json
-    input_value = data.get('input')
+Tools receive POST requests:
 
-    # Your logic here
-    result = process(input_value)
-
-    return jsonify({'result': result})
 ```
+POST /api/tools/{toolName}
+Content-Type: application/json
 
-### Registry Configuration
-
-```json
 {
-  "plugins": [
-    {
-      "id": "my-service",
-      "type": "external",
-      "url": "http://localhost:3001",
-      "enabled": true
-    }
-  ]
+  "param1": "value1",
+  "param2": "value2"
 }
 ```
 
+Must return JSON:
+
+```json
+{
+  "result": "any data",
+  "status": "success"
+}
+```
+
+### Example: Multiple Tools
+
+```typescript
+const manifest = {
+  tools: [
+    {
+      name: 'searchMovies',
+      description: 'Search for movies by title',
+      endpoint: '/api/tools/searchMovies',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string' },
+          year: { type: 'number', optional: true }
+        }
+      }
+    },
+    {
+      name: 'getMovieDetails',
+      description: 'Get detailed information about a movie',
+      endpoint: '/api/tools/getMovieDetails',
+      parameters: {
+        type: 'object',
+        properties: {
+          movieId: { type: 'string' }
+        }
+      }
+    }
+  ]
+};
+
+// Handle requests
+if (url.pathname === '/api/tools/searchMovies') {
+  const { query, year } = await req.json();
+  const results = await searchIMDB(query, year);
+  return Response.json({ results });
+}
+
+if (url.pathname === '/api/tools/getMovieDetails') {
+  const { movieId } = await req.json();
+  const details = await getMovieInfo(movieId);
+  return Response.json(details);
+}
+```
+
+### Tool Best Practices
+
+✅ **Clear descriptions** - AI uses these to decide when to call your tool
+✅ **Validate inputs** - Check parameters before processing
+✅ **Error handling** - Return helpful error messages
+✅ **Fast responses** - Keep tool execution under 10 seconds when possible
+✅ **Structured data** - Return JSON objects, not just strings
+
+---
+
+## Creating Widgets
+
+Widgets are UI components that display data to users.
+
+### Widget Definition
+
+```typescript
+interface WidgetDefinition {
+  id: string;           // Widget identifier
+  title: string;        // Display title
+  url: string;          // GET endpoint path
+  description?: string;
+}
+```
+
+### Widget Endpoint
+
+Widgets are HTML pages served via iframe:
+
+```typescript
+if (url.pathname === '/widgets/dashboard') {
+  return new Response(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Dashboard</title>
+        <style>
+          body { font-family: sans-serif; padding: 20px; }
+          .card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        <h1>My Dashboard</h1>
+        <div class="card">
+          <h2>Statistics</h2>
+          <p>Content here</p>
+        </div>
+
+        <script>
+          // Fetch data and update DOM
+          async function loadData() {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            // Update UI
+          }
+          loadData();
+        </script>
+      </body>
+    </html>
+  `, {
+    headers: { 'Content-Type': 'text/html' }
+  });
+}
+```
+
+### Widget Frameworks
+
+You can use any framework to build widgets:
+
+**React:**
+```typescript
+// Serve a React app
+if (url.pathname.startsWith('/widgets/')) {
+  return serveReactApp();
+}
+```
+
+**Svelte:**
+```typescript
+// Build your Svelte app and serve the output
+if (url.pathname === '/widgets/mywidget') {
+  return Bun.file('./dist/index.html');
+}
+```
+
+**Plain HTML/JS:**
+```typescript
+// Just return HTML
+return new Response(html, {
+  headers: { 'Content-Type': 'text/html' }
+});
+```
+
+---
+
+## Examples by Language
+
+### Python (Flask)
+
+```python
+from flask import Flask, jsonify, request, render_template
+
+app = Flask(__name__)
+
+@app.route('/manifest.json')
+def manifest():
+    return jsonify({
+        'id': 'my-plugin',
+        'name': 'My Plugin',
+        'version': '1.0.0',
+        'tools': [{
+            'name': 'myTool',
+            'description': 'Does something useful',
+            'endpoint': '/api/tools/myTool',
+            'parameters': {
+                'type': 'object',
+                'properties': {
+                    'input': {'type': 'string'}
+                }
+            }
+        }]
+    })
+
+@app.route('/api/tools/myTool', methods=['POST'])
+def my_tool():
+    data = request.json
+    result = process(data['input'])
+    return jsonify({'result': result})
+
+@app.route('/widgets/display')
+def widget():
+    return render_template('widget.html')
+
+if __name__ == '__main__':
+    app.run(port=3001)
+```
+
+### Go (Standard Library)
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "net/http"
+)
+
+type Manifest struct {
+    ID      string          `json:"id"`
+    Name    string          `json:"name"`
+    Version string          `json:"version"`
+    Tools   []ToolDef       `json:"tools"`
+}
+
+func main() {
+    http.HandleFunc("/manifest.json", manifestHandler)
+    http.HandleFunc("/api/tools/myTool", toolHandler)
+    http.ListenAndServe(":3001", nil)
+}
+
+func manifestHandler(w http.ResponseWriter, r *http.Request) {
+    manifest := Manifest{
+        ID:      "my-plugin",
+        Name:    "My Plugin",
+        Version: "1.0.0",
+        Tools:   []ToolDef{{...}},
+    }
+    json.NewEncoder(w).Encode(manifest)
+}
+
+func toolHandler(w http.ResponseWriter, r *http.Request) {
+    var params map[string]interface{}
+    json.NewDecoder(r.Body).Decode(&params)
+
+    result := process(params["input"].(string))
+    json.NewEncoder(w).Encode(map[string]string{
+        "result": result,
+    })
+}
+```
+
+### Rust (Actix-web)
+
+```rust
+use actix_web::{web, App, HttpResponse, HttpServer};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize)]
+struct Manifest {
+    id: String,
+    name: String,
+    version: String,
+}
+
+async fn manifest() -> HttpResponse {
+    let manifest = Manifest {
+        id: "my-plugin".to_string(),
+        name: "My Plugin".to_string(),
+        version: "1.0.0".to_string(),
+    };
+    HttpResponse::Ok().json(manifest)
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .route("/manifest.json", web::get().to(manifest))
+            .route("/api/tools/myTool", web::post().to(my_tool))
+    })
+    .bind("127.0.0.1:3001")?
+    .run()
+    .await
+}
+```
+
+---
+
 ## Distribution
 
-### As NPM Package
-
-1. **Publish to npm:**
-   ```bash
-   npm publish
-   ```
-
-2. **Users install:**
-   ```bash
-   cd plugins
-   bun add @your-org/your-plugin
-   ```
-
-### As Git Repository
-
-Users clone into `plugins/`:
-```bash
-cd plugins
-git clone https://github.com/you/your-plugin
-```
-
-### As Docker Image
-
-For external services:
+### Docker
 
 ```dockerfile
-FROM node:20
+FROM oven/bun:1
 WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install
 COPY . .
-RUN npm install
 EXPOSE 3001
-CMD ["node", "server.js"]
+CMD ["bun", "run", "server.ts"]
 ```
 
-Users run:
 ```bash
-docker run -p 3001:3001 your/plugin-service
+# Build
+docker build -t my-plugin .
+
+# Run
+docker run -p 3001:3001 my-plugin
+
+# Publish
+docker push yourusername/my-plugin
 ```
+
+### Docker Compose (for users)
+
+```yaml
+version: '3.8'
+services:
+  persai:
+    image: persai/core:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./plugins/registry.json:/app/plugins/registry.json
+
+  weather-plugin:
+    image: yourusername/weather-plugin:latest
+    ports:
+      - "3001:3001"
+
+  stocks-plugin:
+    image: yourusername/stocks-plugin:latest
+    ports:
+      - "3002:3002"
+```
+
+Users just need to:
+1. Run `docker-compose up`
+2. Done!
+
+---
+
+## Authentication
+
+Support API keys:
+
+```typescript
+Bun.serve({
+  async fetch(req) {
+    const authHeader = req.headers.get('Authorization');
+
+    if (authHeader !== `Bearer ${process.env.API_KEY}`) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    // Handle request
+  }
+});
+```
+
+Users configure in registry:
+```json
+{
+  "id": "my-plugin",
+  "url": "http://localhost:3001",
+  "apiKey": "secret-key-here"
+}
+```
+
+---
 
 ## Testing
 
-### Test Your Plugin
+### Unit Tests
+
+Test your tool logic:
 
 ```typescript
-// test.ts
-import myPlugin from './index';
+import { expect, test } from 'bun:test';
 
-// Test tool execution
-const result = await myPlugin.tools[0].execute({ input: 'test' });
-console.log('Result:', result);
+test('getWeather returns temperature', async () => {
+  const result = await getWeather({ city: 'London' });
+  expect(result).toHaveProperty('temperature');
+});
 ```
 
-Run:
-```bash
-bun run test.ts
+### Integration Tests
+
+Test the HTTP endpoints:
+
+```typescript
+test('manifest endpoint works', async () => {
+  const response = await fetch('http://localhost:3001/manifest.json');
+  const manifest = await response.json();
+  expect(manifest.id).toBe('weather');
+});
+
+test('tool endpoint works', async () => {
+  const response = await fetch('http://localhost:3001/api/tools/getWeather', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ city: 'London' })
+  });
+  const result = await response.json();
+  expect(result).toHaveProperty('temperature');
+});
 ```
 
-### Integration Testing
+---
 
-Start PersAI and verify:
-1. Plugin loads without errors
-2. Tools appear in AI conversation
-3. Tools execute correctly
-4. Widgets render properly
+## Security
 
-## Security Considerations
+✅ **Validate all inputs** - Don't trust tool parameters
+✅ **Rate limiting** - Prevent abuse
+✅ **API key support** - For paid/private plugins
+✅ **CORS headers** - For widget iframes
+✅ **Error handling** - Don't leak sensitive info in errors
+✅ **HTTPS in production** - Always use TLS
 
-1. **Validate all inputs** with Zod schemas
-2. **Sanitize user data** before using in queries
-3. **Use environment variables** for API keys
-4. **Rate limit** external API calls
-5. **Handle errors gracefully**
-6. **Don't expose sensitive data** in tool responses
+---
 
-## Examples
+## Best Practices
 
-See these plugins for reference:
-- `plugins/nba/` - Full-featured plugin with tools and widgets
-- `plugins/TEMPLATE/` - Starter template
+### Performance
+- Cache expensive operations
+- Stream large responses when possible
+- Keep tool execution under 10 seconds
+- Use connection pooling for databases
 
-## Plugin Registry
+### Reliability
+- Handle errors gracefully
+- Provide clear error messages
+- Log important events
+- Health check endpoint (`/health`)
 
-To make your plugin discoverable:
-1. Tag your repo with `persai-plugin`
-2. Add to npm with keyword `persai-plugin`
-3. Submit to community plugin list (coming soon)
+### User Experience
+- Clear tool descriptions
+- Helpful error messages
+- Fast response times
+- Beautiful widgets
+
+---
+
+## Publishing
+
+1. **Create GitHub repo**
+2. **Add README** with installation instructions
+3. **Publish Docker image**
+4. **Share with community**
+
+Example README for users:
+
+```markdown
+# Weather Plugin for PersAI
+
+Get weather information in your AI conversations.
+
+## Installation
+
+### Docker
+
+```yaml
+# Add to docker-compose.yml
+weather-plugin:
+  image: yourusername/weather-plugin:latest
+  ports:
+    - "3001:3001"
+  environment:
+    - WEATHER_API_KEY=your-key
+```
+
+### Registry
+
+```json
+{
+  "id": "weather",
+  "url": "http://weather-plugin:3001",
+  "enabled": true
+}
+```
+
+## API Key
+
+Get a free API key at https://weatherapi.com
+```
+
+---
 
 ## Support
 
-- **Issues**: https://github.com/your-org/persai/issues
-- **Discussions**: https://github.com/your-org/persai/discussions
-- **Docs**: https://persai.dev/docs
+- **Issues**: GitHub Issues on your plugin repo
+- **PersAI Docs**: https://github.com/your-org/persai
+- **Examples**: https://github.com/persai-plugins
+
+---
 
 ## License
 
-Plugins can use any license. MIT is recommended for open-source plugins.
+Choose any license for your plugin. MIT is recommended for open source plugins.
