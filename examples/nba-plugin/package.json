@@ -1,0 +1,19 @@
+{
+  "name": "@persai-examples/nba-plugin",
+  "version": "1.0.0",
+  "description": "NBA games plugin for PersAI - shows game schedules and scores",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "dev": "bun run server.ts",
+    "start": "bun run server.ts"
+  },
+  "keywords": [
+    "persai-plugin",
+    "nba",
+    "sports",
+    "basketball"
+  ],
+  "author": "PersAI Team",
+  "license": "MIT"
+}

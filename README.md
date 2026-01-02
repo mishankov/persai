@@ -40,29 +40,49 @@ Visit `http://localhost:5173`
 
 ## Plugin System
 
-PersAI features a flexible plugin architecture that allows you to extend the AI with custom functionality.
+PersAI features an HTTP-based plugin architecture - plugins are **standalone services** that extend the AI's capabilities.
 
-### Installed Plugins
+### How Plugins Work
 
-Plugins are located in the `plugins/` directory. Each plugin can provide:
-- **AI Tools**: Functions the AI can call
-- **Widgets**: UI components for displaying data
-- **External APIs**: Integration with third-party services
+Plugins are HTTP services that expose:
+- `GET /manifest.json` - Plugin metadata and capabilities
+- `POST /api/tools/{toolName}` - AI tool execution
+- `GET /widgets/{widgetId}` - UI widgets (HTML/iframe)
+
+### Quick Example
+
+See the [NBA plugin example](./examples/nba-plugin/) - a complete, working plugin you can run and reference.
+
+```bash
+# Run the example
+cd examples/nba-plugin
+bun run dev
+
+# Register it
+# Edit plugins/registry.json:
+{
+  "plugins": [
+    {
+      "id": "nba",
+      "url": "http://localhost:3001",
+      "enabled": true
+    }
+  ]
+}
+```
 
 ### Managing Plugins
 
-#### Enable/Disable Plugins
-
-Edit `plugins/registry.json`:
+Plugins are configured in `plugins/registry.json`:
 
 ```json
 {
   "plugins": [
     {
-      "id": "nba",
-      "type": "local",
-      "path": "./plugins/nba",
-      "enabled": true
+      "id": "my-plugin",
+      "url": "http://localhost:3001",
+      "enabled": true,
+      "apiKey": "optional-key"
     }
   ]
 }
@@ -70,38 +90,17 @@ Edit `plugins/registry.json`:
 
 Set `enabled: false` to disable a plugin.
 
-#### Install a Plugin
+### Example Plugins
 
-**From npm:**
-```bash
-cd plugins
-bun add @persai-plugins/weather
-```
-
-**From git:**
-```bash
-cd plugins
-git clone https://github.com/someone/weather-plugin weather
-```
-
-Then add to `plugins/registry.json`:
-```json
-{
-  "id": "weather",
-  "type": "local",
-  "path": "./plugins/weather",
-  "enabled": true
-}
-```
-
-### Available Plugins
-
-- **NBA** (included): View NBA game schedules and scores
-- More plugins coming soon!
+- **[NBA Games](./examples/nba-plugin/)** - View NBA schedules and live scores
+- More examples coming soon!
 
 ### Creating Plugins
 
-Want to create your own plugin? See [PLUGIN_DEVELOPMENT.md](./PLUGIN_DEVELOPMENT.md) for a comprehensive guide.
+Plugins can be written in **any language**! See:
+- **[Plugin Development Guide](./PLUGIN_DEVELOPMENT.md)** - Complete guide with examples in Python, Go, Rust, TypeScript
+- **[NBA Plugin Example](./examples/nba-plugin/)** - Working reference implementation
+- **[Quick Start](./plugins/README.md)** - Get started in 5 minutes
 
 ## Configuration
 
