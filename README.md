@@ -124,9 +124,34 @@ Set `enabled: false` to disable a plugin.
 
 ### Creating Plugins
 
-Plugins can be written in **any language**! See:
-- **[Plugin Development Guide](./PLUGIN_DEVELOPMENT.md)** - Complete guide with examples in Python, Go, Rust, TypeScript
-- **[NBA Plugin Example](./examples/nba-plugin/)** - Working reference implementation
+PersAI offers **two approaches** for creating plugins:
+
+**1. Plugin Server (Recommended for Simple Plugins)**
+- Bun + Svelte server hosting multiple plugins
+- Install plugins as npm packages - minimal boilerplate
+- Pre-configured Tailwind + DaisyUI
+- Perfect for simple tools and widgets
+
+```bash
+cd examples/plugin-server
+bun install
+bun run dev
+```
+
+See **[Plugin Server Guide](./examples/plugin-server/README.md)** for details.
+
+**2. Full Application (For Complex Plugins)**
+- Complete standalone application
+- Any language/framework (TypeScript, Python, Go, Rust, etc.)
+- Full control over architecture and UI
+- Perfect for complex features
+
+See **[Plugin Development Guide](./PLUGIN_DEVELOPMENT.md)** for examples.
+
+**Not sure which to choose?** See **[Plugin Approaches Guide](./examples/PLUGIN_APPROACHES.md)** for comparison.
+
+**Resources**:
+- **[NBA Plugin Example](./examples/nba-plugin/)** - Working reference (full application)
 - **[Quick Start](./plugins/README.md)** - Get started in 5 minutes
 
 ## Configuration
