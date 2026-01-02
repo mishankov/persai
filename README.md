@@ -18,7 +18,7 @@ A self-hosted conversational AI application with a flexible plugin system. PersA
 - [Bun](https://bun.sh) (or Node.js 20+)
 - Git
 
-### Installation
+### Option 1: Local Development (with NBA Plugin)
 
 ```bash
 # Clone the repository
@@ -32,11 +32,38 @@ bun install
 cp .env.example .env
 # Edit .env with your API keys
 
-# Start development server
+# Start NBA plugin (in separate terminal)
+cd examples/nba-plugin
 bun run dev
+# Plugin runs on http://localhost:3001
+
+# Start PersAI (in another terminal)
+cd ../..
+bun run dev
+# App runs on http://localhost:5173
 ```
 
-Visit `http://localhost:5173`
+Visit `http://localhost:5173` and ask: "What NBA games are today?"
+
+### Option 2: Docker Compose (All-in-One)
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/persai.git
+cd persai
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run everything with Docker Compose
+docker-compose up
+
+# PersAI: http://localhost:5173
+# NBA Plugin: http://localhost:3001
+```
+
+The NBA plugin is included and enabled by default!
 
 ## Plugin System
 

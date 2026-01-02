@@ -1,3 +1,11 @@
 {
-  "plugins": []
+  "plugins": [
+    {
+      "id": "nba",
+      "url": "http://localhost:3001",
+      "enabled": true,
+      "name": "NBA Games",
+      "version": "1.0.0"
+    }
+  ]
 }
