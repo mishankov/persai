@@ -1,5 +1,5 @@
 export interface Provider {
-	id: string;
+	id?: number;
 	name: string;
 	baseUrl: string;
 	apiKey: string;
@@ -9,4 +9,5 @@ export interface Provider {
 export interface Model {
 	id: string;
 	name?: string;
+	providerId?: number;
 }

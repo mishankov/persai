@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import type { Provider } from './types';
 
 	let {
@@ -11,8 +13,13 @@
 
 	let editModal = $state<HTMLDialogElement>();
 
-	const onSave = () => {
+	const onSave = async () => {
 		saveCallback(provider);
+		await fetch(resolve('/settings'), {
+			method: 'POST',
+			body: JSON.stringify(provider)
+		});
+		await invalidateAll();
 		editModal?.close();
 	};
 
