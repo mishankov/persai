@@ -51,7 +51,7 @@
 
 			<ul class="list">
 				{#each provider.models as model (model.id)}
-					<li class="list-row flex flex-col gap-2">
+					<li class="list-row flex flex-col gap-2 pr-0 pl-0">
 						<label class="input w-full">
 							<span class="label">ID</span>
 							<input type="text" value={model.id} required />
