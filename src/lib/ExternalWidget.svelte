@@ -1,6 +1,4 @@
 <script lang="ts">
-	import Modal from './Modal.svelte';
-
 	let { link = '' } = $props();
 
 	let modal = $state<HTMLDialogElement>();

@@ -20,15 +20,6 @@
 	const plugins = [gfmPlugin()];
 </script>
 
-<div class="navbar bg-base-100 shadow-sm">
-	<div class="flex-1">
-		<a class="btn text-xl btn-ghost" href={resolve('/')}>PersAI</a>
-	</div>
-	<div class="flex-none">
-		<ThemeSwitch />
-	</div>
-</div>
-
 <main>
 	<div class="chat">
 		<div class="messages">
@@ -76,7 +67,16 @@
 		</div>
 		<form onsubmit={handleSubmit}>
 			<textarea bind:value={input} class="textarea textarea-primary"> </textarea>
-			<button type="submit" class="btn btn-primary" disabled={sendDisabled}>Send</button>
+			<div class="flex flex-row gap-2">
+				<button type="submit" class="btn flex-1 btn-primary" disabled={sendDisabled}>Send</button>
+				<label class="select">
+					<span class="label">Model</span>
+					<select>
+						<option>Antropic / Sonet 4.5</option>
+						<option>OpenAI / Chat-GPT 5.2</option>
+					</select>
+				</label>
+			</div>
 		</form>
 	</div>
 </main>
