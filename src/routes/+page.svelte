@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import ExternalWidget from '$lib/ExternalWidget.svelte';
-	import ThemeSwitch from '$lib/ThemeSwitch.svelte';
 	import { Chat } from '@ai-sdk/svelte';
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
+
+	let { data } = $props();
 
 	let input = $state('');
 	let sendDisabled = $derived(!input);
@@ -69,11 +69,12 @@
 			<textarea bind:value={input} class="textarea textarea-primary"> </textarea>
 			<div class="flex flex-row gap-2">
 				<button type="submit" class="btn flex-1 btn-primary" disabled={sendDisabled}>Send</button>
-				<label class="select">
+				<label class="select flex-2">
 					<span class="label">Model</span>
 					<select>
-						<option>Antropic / Sonet 4.5</option>
-						<option>OpenAI / Chat-GPT 5.2</option>
+						{#each data.models as model (model.id)}
+							<option>{`${model.providerName} / ${model.name || model.id}`}</option>
+						{/each}
 					</select>
 				</label>
 			</div>

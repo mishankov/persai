@@ -4,11 +4,6 @@ export const providersTable = sqliteTable('providers', {
 	id: int().primaryKey({ autoIncrement: true }),
 	name: text().notNull(),
 	baseUrl: text().notNull(),
-	apiKey: text().notNull()
-});
-
-export const modelsTable = sqliteTable('models', {
-	id: text().primaryKey(),
-	name: text(),
-	providerId: int()
+	apiKey: text().notNull(),
+	models: text({ mode: 'json' }).$type<{ id?: string; name?: string }[]>()
 });

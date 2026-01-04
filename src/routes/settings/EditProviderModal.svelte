@@ -1,29 +1,36 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import type { Provider } from './types';
+	import type { Provider } from '$lib/types';
 
 	let {
-		provider,
-		saveCallback = () => {}
+		provider = $bindable()
 	}: {
 		provider: Provider;
-		saveCallback?: (provider: Provider) => void;
 	} = $props();
 
 	let editModal = $state<HTMLDialogElement>();
+	let localProvider = $state<Provider>({ ...provider });
 
 	const onSave = async () => {
-		saveCallback(provider);
 		await fetch(resolve('/settings'), {
 			method: 'POST',
-			body: JSON.stringify(provider)
+			body: JSON.stringify(localProvider)
 		});
-		await invalidateAll();
+		window.location.reload();
+		editModal?.close();
+	};
+
+	const onDelete = async () => {
+		await fetch(resolve('/settings'), {
+			method: 'DELETE',
+			body: `${localProvider.id}`
+		});
+		window.location.reload();
 		editModal?.close();
 	};
 
 	export const open = () => {
+		localProvider = structuredClone($state.snapshot(provider));
 		editModal?.showModal();
 	};
 </script>
@@ -36,39 +43,54 @@
 
 		<h4 class="text-xl">Provider info</h4>
 		<label class="input w-full">
-			<span class="label">Name</span>
-			<input type="text" value={provider.name} />
+			<span class="label">Name <span class="text-error">*</span></span>
+			<input type="text" bind:value={localProvider.name} />
 		</label>
 
 		<label class="input w-full">
-			<span class="label">Base URL</span>
-			<input type="text" value={provider.baseUrl} />
+			<span class="label">Base URL <span class="text-error">*</span></span>
+			<input type="text" bind:value={localProvider.baseUrl} />
 		</label>
 
 		<label class="input w-full">
-			<span class="label">API key</span>
-			<input type="password" value={provider.apiKey} />
+			<span class="label">API key <span class="text-error">*</span></span>
+			<input type="password" bind:value={localProvider.apiKey} />
 		</label>
+
+		{#if localProvider.id}
+			<button class="btn w-30 btn-xs btn-error" onclick={onDelete}>Delete provider</button>
+		{/if}
 
 		<div>
-			<div class="flex items-center justify-between">
+			<div class="flex content-start items-center justify-between">
 				<h4 class="text-xl">Models</h4>
-				<button class="btn w-20 btn-xs btn-primary">Add model</button>
+				<button
+					class="btn w-20 btn-xs btn-primary"
+					onclick={() => {
+						localProvider.models?.push({});
+					}}>Add model</button
+				>
 			</div>
 
 			<ul class="list">
-				{#each provider.models as model (model.id)}
+				{#each localProvider.models as model, i (i)}
 					<li class="list-row flex flex-col gap-2 pr-0 pl-0">
 						<label class="input w-full">
-							<span class="label">ID</span>
-							<input type="text" value={model.id} required />
+							<span class="label">ID <span class="text-error">*</span></span>
+							<input type="text" bind:value={model.id} required />
 						</label>
 
 						<label class="input w-full">
 							<span class="label">Name</span>
-							<input type="text" value={model.name} />
+							<input type="text" bind:value={model.name} />
 						</label>
-						<button class="btn w-20 btn-xs btn-error">Delete</button>
+						<button
+							class="btn w-30 btn-xs btn-error"
+							onclick={() => {
+								localProvider.models =
+									localProvider.models?.filter((el, index) => index != i) || [];
+							}}>Delete model</button
+						>
 					</li>
 				{/each}
 			</ul>

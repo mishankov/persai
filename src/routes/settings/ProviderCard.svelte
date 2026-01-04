@@ -1,9 +1,9 @@
 <script lang="ts">
 	import EditProviderModal from './EditProviderModal.svelte';
-	import type { Provider } from './types';
+	import type { Provider } from '$lib/types';
 
 	let {
-		provider
+		provider = $bindable()
 	}: {
 		provider: Provider;
 	} = $props();
@@ -36,4 +36,4 @@
 	<button class="btn w-20 btn-primary" onclick={() => editModal?.open()}>Edit</button>
 </div>
 
-<EditProviderModal bind:this={editModal} {provider} />
+<EditProviderModal bind:this={editModal} bind:provider />
