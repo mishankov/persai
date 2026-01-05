@@ -1,4 +1,4 @@
-import { stepCountIs, ToolLoopAgent } from 'ai';
+import { stepCountIs, ToolLoopAgent, type ModelMessage } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 import { OPENROUTER_API_KEY } from '$env/static/private';
@@ -54,7 +54,15 @@ const sheduleAgent = new ToolLoopAgent({
 			return false;
 		}
 	],
-	onFinish: () => {}
+	onFinish: (event) => {
+		event.response.messages.forEach(async (message) => {
+			await db.insert(messagesTable).values({
+				chatId: 0,
+				createdAt: new Date().toISOString(),
+				content: message
+			});
+		});
+	}
 });
 
 export async function POST({ request }) {
@@ -76,14 +84,21 @@ export async function POST({ request }) {
 
 	const modelMessages = messages.map((message) => message.content);
 
-	modelMessages.push({
+	const userMessage: ModelMessage = {
 		role: 'user',
 		content: req.message
+	};
+	await db.insert(messagesTable).values({
+		chatId: req.chatId,
+		createdAt: new Date().toISOString(),
+		content: userMessage
 	});
+
+	modelMessages.push(userMessage);
 
 	const result = await sheduleAgent.stream({
 		messages: modelMessages
 	});
 
-	return new Response(result.fullStream);
+	return new Response(result.textStream);
 }
