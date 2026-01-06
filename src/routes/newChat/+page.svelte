@@ -7,23 +7,23 @@
 
 	let { data }: PageProps = $props();
 
-	let input = $state('');
-	let sendDisabled = $derived(!input);
+	let message = $state('');
+	let sendDisabled = $derived(!message);
+	let model = $state(`${data.models[0].providerId}$${data.models[0].id}`);
 
-	$inspect(data.messages);
 	const chat = new Chat(data.messages);
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 		chat.sendMessage({
 			model: {
-				providerId: '',
-				modelId: ''
+				providerId: model.split('$')[0],
+				modelId: model.split('$')[1]
 			},
 			chatId: data.chat.id,
-			message: input
+			message: message
 		});
-		input = '';
+		message = '';
 	}
 
 	let suggestions = ['Какие игры сегодня в НБА?', 'Как сыграли лейкерс?'];
@@ -81,7 +81,7 @@
 				<button
 					class="badge badge-accent"
 					onclick={() => {
-						input = s;
+						message = s;
 					}}
 				>
 					{s}
@@ -89,14 +89,16 @@
 			{/each}
 		</div>
 		<form onsubmit={handleSubmit}>
-			<textarea bind:value={input} class="textarea textarea-primary"> </textarea>
+			<textarea bind:value={message} class="textarea textarea-primary"> </textarea>
 			<div class="flex flex-row gap-2">
 				<button type="submit" class="btn flex-1 btn-primary" disabled={sendDisabled}>Send</button>
 				<label class="select flex-2">
 					<span class="label">Model</span>
 					<select>
 						{#each data.models as model (model.id)}
-							<option>{`${model.providerName} / ${model.name || model.id}`}</option>
+							<option value={`${model.providerId}$${model.id}`}
+								>{`${model.providerName} / ${model.name || model.id}`}</option
+							>
 						{/each}
 					</select>
 				</label>
