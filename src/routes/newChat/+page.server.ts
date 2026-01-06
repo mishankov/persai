@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db';
 import { chatsTable, providersTable, messagesTable } from '$lib/server/db/schema';
 import type { Chat } from '$lib/types';
+import type { UIMessage } from 'ai';
 
 export const load = async () => {
 	const providers = await db.select().from(providersTable);
@@ -37,7 +38,42 @@ export const load = async () => {
 		chat = chats[0];
 	}
 
-	const messages = await db.select().from(messagesTable);
+	const messages: UIMessage[] = (await db.select().from(messagesTable)).map((message) => {
+		switch (message.content.role) {
+			case 'user':
+				return {
+					id: crypto.randomUUID(),
+					role: 'user',
+					parts: [{ type: 'text', text: message.content.content }]
+				} as UIMessage;
+			case 'assistant':
+				if (message.content.content[0].type === 'text') {
+					return {
+						id: crypto.randomUUID(),
+						role: 'assistant',
+						parts: [{ type: 'text', text: message.content.content[0].text }]
+					} as UIMessage;
+				}
+				break;
+			case 'tool':
+				return {
+					id: crypto.randomUUID(),
+					role: 'assistant',
+					parts: [
+						{
+							type: 'tool-' + message.content.content[0].toolName,
+							output: message.content.content[0].output.value
+						}
+					]
+				};
+			case 'system':
+				return {
+					id: crypto.randomUUID(),
+					role: 'system',
+					parts: [{ type: 'text', text: message.content.content }]
+				} as UIMessage;
+		}
+	});
 
 	return { models, chat, messages };
 };

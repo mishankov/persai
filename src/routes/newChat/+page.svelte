@@ -4,18 +4,20 @@
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
 	import type { PageProps } from './$types';
+	import { convertModelMessagesToUIMessages } from '$lib/message-converter';
 
 	let { data }: PageProps = $props();
 
 	let input = $state('');
 	let sendDisabled = $derived(!input);
-	const chat = new Chat({});
 
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		chat.sendMessage({ text: input });
+		// chat.sendMessage({ text: input });
 		input = '';
 	}
+
+	console.log(data.messages);
 
 	let suggestions = ['Какие игры сегодня в НБА?', 'Как сыграли лейкерс?'];
 	const plugins = [gfmPlugin()];
@@ -29,32 +31,34 @@
 
 		<div class="messages">
 			{#each data.messages as message, messageIndex (messageIndex)}
-				{#each message.parts as part, partIndex (partIndex)}
-					<div
-						class={[
-							'chat',
-							message.role === 'user' || 'chat-start',
-							message.role === 'assistant' || 'chat-end'
-						]}
-					>
-						{#if part.type === 'text'}
-							<div class="chat-header">{message.role}</div>
-							<div class="chat-bubble">
-								<Markdown md={part.text} {plugins} />
-							</div>
-						{:else if part.type === 'reasoning'}
-							<div class="card bg-primary text-primary-content">
-								<div class="card-body">
+				{#if message}
+					{#each message.parts as part, partIndex (partIndex)}
+						<div
+							class={[
+								'chat',
+								message.role === 'user' || 'chat-start',
+								message.role === 'assistant' || 'chat-end'
+							]}
+						>
+							{#if part.type === 'text'}
+								<div class="chat-header">{message.role}</div>
+								<div class="chat-bubble">
 									<Markdown md={part.text} {plugins} />
 								</div>
-							</div>
-						{:else if part.type.startsWith('tool-show') && part?.output?.baseURL && part?.output?.link}
-							<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
-						{:else if part.type.startsWith('tool')}
-							<div class="badge badge-ghost">{'Вызвал тулзу ' + part.type}</div>
-						{/if}
-					</div>
-				{/each}
+							{:else if part.type === 'reasoning'}
+								<div class="card bg-primary text-primary-content">
+									<div class="card-body">
+										<Markdown md={part.text} {plugins} />
+									</div>
+								</div>
+							{:else if part.type.startsWith('tool-show') && part?.output?.baseURL && part?.output?.link}
+								<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
+							{:else if part.type.startsWith('tool')}
+								<div class="badge badge-ghost">{'Вызвал тулзу ' + part.type}</div>
+							{/if}
+						</div>
+					{/each}
+				{/if}
 			{/each}
 		</div>
 

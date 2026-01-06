@@ -75,8 +75,6 @@ export async function POST({ request }) {
 		message: string;
 	} = await request.json();
 
-	console.log('New message data:', req);
-
 	const messages = await db
 		.select()
 		.from(messagesTable)
@@ -100,5 +98,5 @@ export async function POST({ request }) {
 		messages: modelMessages
 	});
 
-	return new Response(result.textStream);
+	return result.toUIMessageStreamResponse();
 }
