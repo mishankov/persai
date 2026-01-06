@@ -3,7 +3,7 @@
 	import type { Provider } from '$lib/types';
 
 	let {
-		provider = $bindable()
+		provider
 	}: {
 		provider: Provider;
 	} = $props();
@@ -36,4 +36,4 @@
 	<button class="btn w-20 btn-primary" onclick={() => editModal?.open()}>Edit</button>
 </div>
 
-<EditProviderModal bind:this={editModal} bind:provider />
+<EditProviderModal bind:this={editModal} {provider} />

@@ -3,18 +3,16 @@
 	import EditProviderModal from './EditProviderModal.svelte';
 	import ProviderCard from './ProviderCard.svelte';
 	import type { Provider } from '$lib/types';
+	import { onMount } from 'svelte';
 
 	let { data }: PageProps = $props();
 
-	let providers = $state<Provider[]>([]);
-
-	function setData() {
-		providers = [...data.providers];
-	}
-
+	let providers = $state<Provider[]>();
 	let newProviderModal = $state<EditProviderModal>();
 
-	setData();
+	onMount(() => {
+		providers = data.providers;
+	});
 </script>
 
 <div class="container mx-auto max-w-4xl p-6">
@@ -36,10 +34,10 @@
 					}}
 				/>
 			</div>
-			{#if providers.length > 0}
+			{#if providers && providers.length > 0}
 				<div class="flex flex-row gap-2">
 					{#each providers as provider, i (provider.id)}
-						<ProviderCard bind:provider={providers[i]} />
+						<ProviderCard provider={providers[i]} />
 					{/each}
 				</div>
 			{:else}
