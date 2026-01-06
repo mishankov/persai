@@ -3,19 +3,28 @@
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
 	import type { PageProps } from './$types';
+	import { Chat } from '$lib/chat.svelte';
 
 	let { data }: PageProps = $props();
 
 	let input = $state('');
 	let sendDisabled = $derived(!input);
 
+	$inspect(data.messages);
+	const chat = new Chat(data.messages);
+
 	function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
-		// chat.sendMessage({ text: input });
+		chat.sendMessage({
+			model: {
+				providerId: '',
+				modelId: ''
+			},
+			chatId: data.chat.id,
+			message: input
+		});
 		input = '';
 	}
-
-	console.log(data.messages);
 
 	let suggestions = ['Какие игры сегодня в НБА?', 'Как сыграли лейкерс?'];
 	const plugins = [gfmPlugin()];
@@ -28,7 +37,7 @@
 		</div>
 
 		<div class="messages">
-			{#each data.messages as message, messageIndex (messageIndex)}
+			{#each chat.messages as message, messageIndex (messageIndex)}
 				{#if message}
 					{#each message.parts as part, partIndex (partIndex)}
 						<div
@@ -52,13 +61,20 @@
 							{:else if part.type.startsWith('tool-show') && part?.output?.baseURL && part?.output?.link}
 								<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
 							{:else if part.type.startsWith('tool')}
-								<div class="badge badge-ghost">{'Вызвал тулзу ' + part.type}</div>
+								<div class="badge badge-ghost">{`Called ${part.type} tool`}</div>
 							{/if}
 						</div>
 					{/each}
 				{/if}
 			{/each}
 		</div>
+
+		{#if chat.state === 'generating'}
+			<div class="flex flex-row items-center gap-2">
+				<span class="loading loading-xs loading-dots text-neutral-400"></span>
+				<span class="skeleton skeleton-text text-sm">{chat.stateMessage}</span>
+			</div>
+		{/if}
 
 		<div class="suggestions">
 			{#each suggestions as s (s)}
