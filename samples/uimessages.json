@@ -1,0 +1,43 @@
+{
+	"id": "PSvy13G8hN39p8Fu",
+	"messages": [
+		{
+			"parts": [{ "type": "text", "text": "Какие игры сегодня в НБА?" }],
+			"id": "xkHkJClwvddddl66",
+			"role": "user"
+		},
+		{
+			"id": "AM0IyxNlxytTZA45",
+			"role": "assistant",
+			"parts": [
+				{ "type": "step-start" },
+				{
+					"type": "tool-showGames",
+					"toolCallId": "call_c24be3430ca54da3bb9f6902",
+					"state": "output-available",
+					"input": {},
+					"output": { "link": "/widgets/games", "baseURL": "http://localhost:4444" }
+				}
+			]
+		},
+		{
+			"parts": [{ "type": "text", "text": "What can you do?" }],
+			"id": "vOEAo2bltuINqo9t",
+			"role": "user"
+		},
+		{
+			"id": "7GnEo7bnWgnOlKR2",
+			"role": "assistant",
+			"parts": [
+				{ "type": "step-start" },
+				{
+					"type": "text",
+					"text": "I can help you with:\n\n1. **NBA Game Information** - Show you today's NBA games, schedules, and results\n2. **Web Content** - Fetch data from websites by providing a link\n\nFor NBA-related questions, I can:\n- Display all today's games\n- Provide schedules and results\n- Help with game details\n\nJust ask me about today's NBA games or provide a web link for fetching data!",
+					"state": "done"
+				}
+			]
+		},
+		{ "parts": [{ "type": "text", "text": "test" }], "id": "3UbfaK1M678byDII", "role": "user" }
+	],
+	"trigger": "submit-message"
+}

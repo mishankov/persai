@@ -1,10 +1,8 @@
 <script lang="ts">
 	import ExternalWidget from '$lib/ExternalWidget.svelte';
-	import { Chat } from '@ai-sdk/svelte';
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
 	import type { PageProps } from './$types';
-	import { convertModelMessagesToUIMessages } from '$lib/message-converter';
 
 	let { data }: PageProps = $props();
 
