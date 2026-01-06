@@ -94,7 +94,7 @@
 				<button type="submit" class="btn flex-1 btn-primary" disabled={sendDisabled}>Send</button>
 				<label class="select flex-2">
 					<span class="label">Model</span>
-					<select>
+					<select bind:value={model}>
 						{#each data.models as model (model.id)}
 							<option value={`${model.providerId}$${model.id}`}
 								>{`${model.providerName} / ${model.name || model.id}`}</option
