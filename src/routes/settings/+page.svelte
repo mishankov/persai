@@ -3,16 +3,11 @@
 	import EditProviderModal from './EditProviderModal.svelte';
 	import ProviderCard from './ProviderCard.svelte';
 	import type { Provider } from '$lib/types';
-	import { onMount } from 'svelte';
 
 	let { data }: PageProps = $props();
 
-	let providers = $state<Provider[]>();
+	let providers = $state<Provider[]>(data.providers);
 	let newProviderModal = $state<EditProviderModal>();
-
-	onMount(() => {
-		providers = data.providers;
-	});
 </script>
 
 <div class="container mx-auto max-w-4xl p-6">
