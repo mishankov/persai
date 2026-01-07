@@ -99,7 +99,7 @@
 </script>
 
 <main>
-	<div class="chat">
+	<div class="chat-container">
 		<div class="flex flex-row items-center justify-between">
 			<h2 class="text-2xl font-bold">{data.chat.name}</h2>
 			<button class="btn btn-ghost btn-sm" onclick={() => clearModal?.showModal()}>Clear</button>
@@ -243,7 +243,7 @@
 		justify-content: center;
 	}
 
-	.chat {
+	.chat-container {
 		width: 750px;
 		max-width: 1000px;
 		height: calc(100vh - 80px);
@@ -273,7 +273,7 @@
 		gap: 10px;
 	}
 
-	.chat form {
+	.chat-container form {
 		width: 100%;
 
 		display: flex;
@@ -281,7 +281,7 @@
 		gap: 10px;
 	}
 
-	.chat form textarea {
+	.chat-container form textarea {
 		width: 100%;
 	}
 </style>
