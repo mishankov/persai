@@ -9,6 +9,7 @@
 	} = $props();
 
 	let editModal = $state<EditProviderModal>();
+	provider = structuredClone($state.snapshot(provider));
 </script>
 
 <div class="card flex w-96 gap-2 bg-base-100 p-4 shadow-sm">
