@@ -48,8 +48,10 @@
 		message = '';
 	}
 
-	let suggestions = ['Какие игры сегодня в НБА?', 'Как сыграли лейкерс?'];
+	let suggestions = ['What can you do?', 'What games are today in NBA?', 'How are Lakers played?'];
 	const plugins = [gfmPlugin()];
+
+	// console.log(data.messages.at(-1).parts);
 </script>
 
 <main>
@@ -75,13 +77,20 @@
 									<Markdown md={part.text} {plugins} />
 								</div>
 							{:else if part.type === 'reasoning'}
-								<div class="card bg-primary text-primary-content">
-									<div class="card-body">
-										<Markdown md={part.text} {plugins} />
-									</div>
+								<div class="chat-header">{message.role} (reasoning)</div>
+								<div class="chat-bubble">
+									<details class="collapse">
+										<summary class="collapse-title p-0 text-sm font-semibold">Reasoning...</summary>
+										<div class="collapse-content text-sm">
+											<Markdown md={part.text} {plugins} />
+										</div>
+									</details>
 								</div>
 							{:else if part.type.startsWith('tool-show') && part?.output?.baseURL && part?.output?.link}
-								<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
+								<div class="chat-header">{message.role}</div>
+								<div class="chat-bubble chat-bubble-primary p-0">
+									<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
+								</div>
 							{:else if part.type.startsWith('tool')}
 								<div class="badge badge-ghost">
 									{`Called ${part.type.replace('tool-', '')} tool`}
@@ -92,6 +101,25 @@
 				{/if}
 			{/each}
 		</div>
+
+		{#if chat.errorMessage}
+			<div role="alert" class="alert alert-error">
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6 shrink-0 stroke-current"
+					fill="none"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+					/>
+				</svg>
+				<span>{chat.errorMessage}</span>
+			</div>
+		{/if}
 
 		{#if chat.state === 'generating'}
 			<div class="flex flex-row items-center gap-2">

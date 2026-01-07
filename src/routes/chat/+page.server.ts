@@ -48,13 +48,15 @@ export const load = async () => {
 						parts: [{ type: 'text', text: message.content.content }]
 					} as UIMessage;
 				case 'assistant':
-					if (message.content.content[0].type === 'text') {
-						return {
-							id: crypto.randomUUID(),
-							role: 'assistant',
-							parts: [{ type: 'text', text: message.content.content[0].text }]
-						} as UIMessage;
-					}
+					return {
+						id: crypto.randomUUID(),
+						role: 'assistant',
+						// parts: [{ type: 'text', text: message.content.content[0].text }]
+						parts: message.content.content
+							.filter((part) => part.type === 'text' || part.type === 'reasoning')
+							.map((part) => ({ type: part.type, text: part.text }))
+					} as UIMessage;
+
 					break;
 				case 'tool':
 					return {
@@ -76,6 +78,8 @@ export const load = async () => {
 			}
 		})
 		.filter((message) => message);
+
+	// console.table(messages.at(-1).parts, ['type']);
 
 	return { models, chat, messages };
 };

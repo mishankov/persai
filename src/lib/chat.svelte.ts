@@ -6,11 +6,13 @@ export class Chat {
 	messages: UIMessage[];
 	state: 'idle' | 'generating';
 	stateMessage: string;
+	errorMessage: string;
 
 	constructor(initialMessages: UIMessage[]) {
 		this.messages = $state(initialMessages);
 		this.state = $state('idle');
 		this.stateMessage = $state('');
+		this.errorMessage = $state('');
 	}
 
 	async sendMessage(params: {
@@ -21,6 +23,7 @@ export class Chat {
 		chatId: number;
 		message: string;
 	}) {
+		this.errorMessage = '';
 		this.messages.push({
 			id: crypto.randomUUID(),
 			role: 'user',
@@ -60,6 +63,7 @@ export class Chat {
 
 		// Track current text part
 		let currentTextPart: { type: 'text'; text: string } | null = null;
+		let currentReasoningPart: { type: 'text'; text: string } | null = null;
 
 		try {
 			this.state = 'generating';
@@ -129,6 +133,20 @@ export class Chat {
 										]
 									});
 									break;
+								case 'reasoning-delta':
+									this.state = 'generating';
+									this.stateMessage = 'reasoning';
+									// Append text to the current text part
+									if (!currentReasoningPart) {
+										currentReasoningPart = {
+											type: 'reasoning',
+											text: parsed.delta
+										};
+										this.messages.at(-1).parts.push(currentReasoningPart);
+									} else {
+										this.messages.at(-1).parts.at(-1).text += parsed.delta;
+									}
+									break;
 								case 'finish':
 									// Stream finished
 									this.state = 'idle';
@@ -136,7 +154,11 @@ export class Chat {
 									break;
 								case 'error':
 									// Handle errors
-									throw new Error(parsed.error || 'Stream error');
+									this.errorMessage = parsed.errorText;
+									this.state = 'idle';
+									return;
+								default:
+									console.debug('Unhandled streaming event:', parsed);
 							}
 						} catch (e) {
 							console.error('Failed to parse stream data:', data, e);
