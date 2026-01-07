@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import ExternalWidget from '$lib/ExternalWidget.svelte';
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
@@ -7,9 +8,30 @@
 
 	let { data }: PageProps = $props();
 
+	const MODEL_STORAGE_KEY = 'persai-selected-model';
+	const defaultModel = `${data.models[0].providerId}$${data.models[0].id}`;
+
+	function getInitialModel(): string {
+		if (!browser) return defaultModel;
+
+		const saved = localStorage.getItem(MODEL_STORAGE_KEY);
+		if (!saved) return defaultModel;
+
+		// Check if saved model still exists in available models
+		const isValid = data.models.some((m) => `${m.providerId}$${m.id}` === saved);
+		return isValid ? saved : defaultModel;
+	}
+
 	let message = $state('');
 	let sendDisabled = $derived(!message);
-	let model = $state(`${data.models[0].providerId}$${data.models[0].id}`);
+	let model = $state(getInitialModel());
+
+	// Persist model selection to localStorage
+	$effect(() => {
+		if (browser) {
+			localStorage.setItem(MODEL_STORAGE_KEY, model);
+		}
+	});
 
 	const chat = new Chat(data.messages);
 
