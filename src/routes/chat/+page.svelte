@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { resolve } from '$app/paths';
 	import ExternalWidget from '$lib/ExternalWidget.svelte';
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
@@ -51,16 +52,68 @@
 	let suggestions = ['What can you do?', 'What games are today in NBA?', 'How are Lakers played?'];
 	const plugins = [gfmPlugin()];
 
-	// console.log(data.messages.at(-1).parts);
+	let clearModal = $state<HTMLDialogElement>();
+
+	async function clearChat() {
+		await fetch(resolve('/api/chat'), {
+			method: 'DELETE',
+			body: `${data.chat.id}`
+		});
+		window.location.reload();
+	}
+
+	// Auto-scroll functionality
+	let messagesContainer = $state<HTMLDivElement>();
+	let isAtBottom = $state(true);
+
+	function checkIfAtBottom() {
+		if (!messagesContainer) return;
+		const threshold = 50;
+		const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+		isAtBottom = scrollHeight - scrollTop - clientHeight < threshold;
+	}
+
+	function scrollToBottom() {
+		if (messagesContainer) {
+			messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			isAtBottom = true;
+		}
+	}
+
+	// Scroll to bottom on mount
+	$effect(() => {
+		if (browser && messagesContainer) {
+			scrollToBottom();
+		}
+	});
+
+	// Auto-scroll when new messages are added (if user is at bottom)
+	$effect(() => {
+		// Track messages length to trigger effect on new messages
+		const _len = chat.messages.length;
+		if (browser && isAtBottom) {
+			// Use setTimeout to ensure DOM has updated
+			setTimeout(scrollToBottom, 0);
+		}
+	});
+
+	// Auto-scroll during streaming generation
+	$effect(() => {
+		if (chat.state === 'generating' && browser && isAtBottom) {
+			const interval = setInterval(scrollToBottom, 100);
+			return () => clearInterval(interval);
+		}
+	});
 </script>
 
 <main>
-	<div class="chat">
-		<div class="flex flex-row items-center gap-2">
+	<div class="chat-container">
+		<div class="flex flex-row items-center justify-between">
 			<h2 class="text-2xl font-bold">{data.chat.name}</h2>
+			<button class="btn btn-ghost btn-sm" onclick={() => clearModal?.showModal()}>Clear</button>
 		</div>
 
-		<div class="messages">
+		<div class="messages" bind:this={messagesContainer} onscroll={checkIfAtBottom}>
 			{#each chat.messages as message, messageIndex (messageIndex)}
 				{#if message}
 					{#each message.parts as part, partIndex (partIndex)}
@@ -101,6 +154,25 @@
 				{/if}
 			{/each}
 		</div>
+
+		{#if !isAtBottom}
+			<button class="scroll-to-bottom btn btn-circle btn-primary" onclick={scrollToBottom}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M19 14l-7 7m0 0l-7-7m7 7V3"
+					/>
+				</svg>
+			</button>
+		{/if}
 
 		{#if chat.errorMessage}
 			<div role="alert" class="alert alert-error">
@@ -159,21 +231,48 @@
 	</div>
 </main>
 
+<dialog bind:this={clearModal} class="modal">
+	<div class="modal-box">
+		<h3 class="text-lg font-bold">Clear chat</h3>
+		<p class="py-4">Are you sure you want to clear all messages in this chat?</p>
+		<div class="modal-action">
+			<button class="btn btn-error" onclick={clearChat}>Yes, clear</button>
+			<button class="btn" onclick={() => clearModal?.close()}>Cancel</button>
+		</div>
+	</div>
+	<form method="dialog" class="modal-backdrop">
+		<button>close</button>
+	</form>
+</dialog>
+
 <style>
 	main {
 		display: flex;
 		justify-content: center;
 	}
 
-	.chat {
+	.chat-container {
 		width: 750px;
 		max-width: 1000px;
+		height: calc(100vh - 80px);
 
 		padding: 10px;
 
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+		position: relative;
+	}
+
+	.messages {
+		flex: 1;
+		overflow-y: auto;
+	}
+
+	.scroll-to-bottom {
+		position: absolute;
+		bottom: 200px;
+		right: 20px;
 	}
 
 	.suggestions {
@@ -182,7 +281,7 @@
 		gap: 10px;
 	}
 
-	.chat form {
+	.chat-container form {
 		width: 100%;
 
 		display: flex;
@@ -190,7 +289,7 @@
 		gap: 10px;
 	}
 
-	.chat form textarea {
+	.chat-container form textarea {
 		width: 100%;
 	}
 </style>

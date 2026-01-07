@@ -86,3 +86,10 @@ export async function POST({ request }) {
 
 	return result.toUIMessageStreamResponse();
 }
+
+export async function DELETE({ request }) {
+	const chatId = await request.text();
+
+	await db.delete(messagesTable).where(eq(messagesTable.chatId, +chatId));
+	return new Response(null, { status: 200 });
+}

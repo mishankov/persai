@@ -9,7 +9,7 @@
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
-<div class="navbar bg-base-100 shadow-sm">
+<div class="navbar bg-base-100 shadow-sm sticky top-0 z-50">
 	<div class="flex-1">
 		<a class="btn text-xl btn-ghost" href={resolve('/')}>PersAI</a>
 	</div>
