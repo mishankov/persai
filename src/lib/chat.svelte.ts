@@ -32,7 +32,7 @@ export class Chat {
 			]
 		});
 
-		const resp = await fetch(resolve('/api/newChat'), {
+		const resp = await fetch(resolve('/api/chat'), {
 			method: 'POST',
 			body: JSON.stringify(params)
 		});

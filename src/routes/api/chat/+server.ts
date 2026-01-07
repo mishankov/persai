@@ -1,8 +1,6 @@
 import { stepCountIs, ToolLoopAgent, type ModelMessage } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
-import { OPENROUTER_API_KEY } from '$env/static/private';
-
 import { loadTools } from '$lib/tools';
 import { db } from '$lib/server/db';
 import { messagesTable, providersTable } from '$lib/server/db/schema.js';
