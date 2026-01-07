@@ -36,10 +36,12 @@ export const loadTools = async () => {
 				description: pluginTool.modelDescription,
 				inputSchema: jsonSchema(pluginTool.inputSchema),
 				execute: async (inputData) => {
-					console.log('executing tool', toolId, 'with params', JSON.stringify(inputData));
+					const inputJson = JSON.stringify(inputData);
+					console.log('executing tool', toolId, 'with params', inputJson);
 					const response = await fetch(plugin + pluginTool.path, {
 						method: 'POST',
-						body: JSON.stringify(inputData)
+						headers: { 'Content-Type': 'application/json' },
+						body: inputJson
 					});
 					const outputData = await response.json();
 

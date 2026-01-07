@@ -1,5 +1,4 @@
 export async function POST({ request }) {
-	console.log('req:', await request.text());
 	const params: { gameId: string } = await request.json();
 
 	const resp = await fetch(
