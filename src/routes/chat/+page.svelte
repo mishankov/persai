@@ -62,7 +62,40 @@
 		window.location.reload();
 	}
 
-	// console.log(data.messages.at(-1).parts);
+	// Auto-scroll functionality
+	let messagesContainer = $state<HTMLDivElement>();
+	let isAtBottom = $state(true);
+
+	function checkIfAtBottom() {
+		if (!messagesContainer) return;
+		const threshold = 50;
+		const { scrollTop, scrollHeight, clientHeight } = messagesContainer;
+		isAtBottom = scrollHeight - scrollTop - clientHeight < threshold;
+	}
+
+	function scrollToBottom() {
+		if (messagesContainer) {
+			messagesContainer.scrollTop = messagesContainer.scrollHeight;
+			isAtBottom = true;
+		}
+	}
+
+	// Scroll to bottom on mount
+	$effect(() => {
+		if (browser && messagesContainer) {
+			scrollToBottom();
+		}
+	});
+
+	// Auto-scroll when messages change (if user is at bottom)
+	$effect(() => {
+		// Track messages array to trigger effect
+		chat.messages;
+		if (browser && isAtBottom) {
+			// Use setTimeout to ensure DOM has updated
+			setTimeout(scrollToBottom, 0);
+		}
+	});
 </script>
 
 <main>
@@ -72,7 +105,7 @@
 			<button class="btn btn-ghost btn-sm" onclick={() => clearModal?.showModal()}>Clear</button>
 		</div>
 
-		<div class="messages">
+		<div class="messages" bind:this={messagesContainer} onscroll={checkIfAtBottom}>
 			{#each chat.messages as message, messageIndex (messageIndex)}
 				{#if message}
 					{#each message.parts as part, partIndex (partIndex)}
@@ -113,6 +146,25 @@
 				{/if}
 			{/each}
 		</div>
+
+		{#if !isAtBottom}
+			<button class="scroll-to-bottom btn btn-circle btn-primary" onclick={scrollToBottom}>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					class="h-6 w-6"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M19 14l-7 7m0 0l-7-7m7 7V3"
+					/>
+				</svg>
+			</button>
+		{/if}
 
 		{#if chat.errorMessage}
 			<div role="alert" class="alert alert-error">
@@ -194,12 +246,25 @@
 	.chat {
 		width: 750px;
 		max-width: 1000px;
+		height: calc(100vh - 80px);
 
 		padding: 10px;
 
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+		position: relative;
+	}
+
+	.messages {
+		flex: 1;
+		overflow-y: auto;
+	}
+
+	.scroll-to-bottom {
+		position: absolute;
+		bottom: 200px;
+		right: 20px;
 	}
 
 	.suggestions {
