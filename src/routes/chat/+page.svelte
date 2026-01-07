@@ -71,7 +71,7 @@
 						>
 							{#if part.type === 'text'}
 								<div class="chat-header">{message.role}</div>
-								<div class="chat-bubble">
+								<div class="chat-bubble chat-bubble-primary">
 									<Markdown md={part.text} {plugins} />
 								</div>
 							{:else if part.type === 'reasoning'}
@@ -83,7 +83,9 @@
 							{:else if part.type.startsWith('tool-show') && part?.output?.baseURL && part?.output?.link}
 								<ExternalWidget link={part?.output?.baseURL + part?.output?.link} />
 							{:else if part.type.startsWith('tool')}
-								<div class="badge badge-ghost">{`Called ${part.type} tool`}</div>
+								<div class="badge badge-ghost">
+									{`Called ${part.type.replace('tool-', '')} tool`}
+								</div>
 							{/if}
 						</div>
 					{/each}
