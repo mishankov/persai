@@ -87,13 +87,21 @@
 		}
 	});
 
-	// Auto-scroll when messages change (if user is at bottom)
+	// Auto-scroll when new messages are added (if user is at bottom)
 	$effect(() => {
-		// Track messages array to trigger effect
-		chat.messages;
+		// Track messages length to trigger effect on new messages
+		const _len = chat.messages.length;
 		if (browser && isAtBottom) {
 			// Use setTimeout to ensure DOM has updated
 			setTimeout(scrollToBottom, 0);
+		}
+	});
+
+	// Auto-scroll during streaming generation
+	$effect(() => {
+		if (chat.state === 'generating' && browser && isAtBottom) {
+			const interval = setInterval(scrollToBottom, 100);
+			return () => clearInterval(interval);
 		}
 	});
 </script>
