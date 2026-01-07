@@ -5,7 +5,8 @@ const tools = {
 		modelDescription: 'Get schedule and results of todays NBA games',
 		path: '/api/getGames',
 		inputSchema: {
-			type: 'null'
+			type: 'object',
+			properties: {}
 		}
 	},
 	getGame: {
@@ -27,7 +28,8 @@ const tools = {
 			'Shows the user a list of todays NBA games with their results, if the games have already been played. Always use this tool if the user is asking about all of todays games. Not suitable for displaying information about a single game',
 		path: '/api/showGames',
 		inputSchema: {
-			type: 'null'
+			type: 'object',
+			properties: {}
 		}
 	}
 };

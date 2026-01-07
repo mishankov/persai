@@ -19,7 +19,7 @@
 
 	const onSave = async () => {
 		if (validate()) {
-			await fetch(resolve('/settings'), {
+			await fetch(resolve('/api/providers'), {
 				method: 'POST',
 				body: JSON.stringify(localProvider)
 			});
