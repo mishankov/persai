@@ -1,3 +1,0 @@
-- [ ] Remove old chat UI and api
-- [ ] Save selected chat model to local storage to remenber users choice
-- [ ] Fix providers flickering
