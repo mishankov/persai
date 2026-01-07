@@ -1,22 +1,40 @@
 const tools = {
 	getGames: {
-		type: 'data',
-		userDescription: 'Получить расписание и результаты сегодняшних матчей НБА',
-		modelDescription: 'Получить расписание и результаты сегодняшних матчей НБА',
-		path: '/api/getGames'
+		type: 'tool',
+		userDescription: 'Get schedule and results of todays NBA games',
+		modelDescription: 'Get schedule and results of todays NBA games',
+		path: '/api/getGames',
+		inputSchema: {
+			type: 'null'
+		}
+	},
+	getGame: {
+		type: 'tool',
+		userDescription: 'Get information about specific NBA game',
+		modelDescription: 'Get information about specific NBA game by its id',
+		path: '/api/getGame',
+		inputSchema: {
+			type: 'object',
+			properties: {
+				gameId: { type: 'string' }
+			}
+		}
 	},
 	showGames: {
 		type: 'widget',
-		userDescription: 'Виджет отображения информации по играм',
+		userDescription: 'Widget that shows todays NBA games',
 		modelDescription:
-			'Показывает пользователю список сегодняшних игр НБА с их результатами, если игры уже прошли. Всегдя используй этот тул, если пользователь спрашивает о всех сегодняшних играх. Не подходит для отображения информации об одной игре',
-		path: '/api/showGames'
+			'Shows the user a list of todays NBA games with their results, if the games have already been played. Always use this tool if the user is asking about all of todays games. Not suitable for displaying information about a single game',
+		path: '/api/showGames',
+		inputSchema: {
+			type: 'null'
+		}
 	}
 };
 
 const plugin = {
 	name: 'NBA',
-	description: 'Информация об играх НБА',
+	description: 'Information about NBA Games',
 	tools: tools
 };
 

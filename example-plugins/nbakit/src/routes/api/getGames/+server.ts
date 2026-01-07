@@ -1,6 +1,7 @@
-import { getScoreboard } from '$lib/api';
-
 export async function POST() {
-	const data = await getScoreboard();
-	return Response.json(data);
+	const resp = await fetch(
+		'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard'
+	);
+
+	return Response.json(await resp.json());
 }

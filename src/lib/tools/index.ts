@@ -1,13 +1,16 @@
-import { tool, type Tool } from 'ai';
+import { tool, type Tool, jsonSchema } from 'ai';
 import { z } from 'zod';
 
 const coreTools = {
 	webfetch: tool({
 		description: 'Fetches data from web by link. Never use links from show tools here',
-		inputSchema: z.object({
-			link: z.string()
+		inputSchema: jsonSchema<{ link: string }>({
+			type: 'object',
+			properties: {
+				link: { type: 'string' }
+			}
 		}),
-		execute: async ({ link }) => {
+		execute: async ({ link }: { link: string }) => {
 			console.log('webfetch called with', link);
 			const response = await fetch(link);
 			const text = await response.text();
@@ -31,9 +34,9 @@ export const loadTools = async () => {
 			const pluginTool = pluginData.tools[toolId];
 			tools[toolId] = tool({
 				description: pluginTool.modelDescription,
-				inputSchema: z.object(),
+				inputSchema: jsonSchema(pluginTool.inputSchema),
 				execute: async (inputData) => {
-					console.log('executing tool', toolId);
+					console.log('executing tool', toolId, 'with params', JSON.stringify(inputData));
 					const response = await fetch(plugin + pluginTool.path, {
 						method: 'POST',
 						body: JSON.stringify(inputData)
