@@ -67,7 +67,7 @@
 
 <main>
 	<div class="chat">
-		<div class="flex flex-row items-center gap-2">
+		<div class="flex flex-row items-center justify-between">
 			<h2 class="text-2xl font-bold">{data.chat.name}</h2>
 			<button class="btn btn-ghost btn-sm" onclick={() => clearModal?.showModal()}>Clear</button>
 		</div>
