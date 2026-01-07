@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db';
 import { providersTable } from '$lib/server/db/schema';
-import type { Provider } from '../../lib/types';
+import type { Provider } from '$lib/types';
 import { eq } from 'drizzle-orm';
 
 export const POST = async ({ request }) => {

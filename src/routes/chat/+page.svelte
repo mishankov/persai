@@ -10,7 +10,10 @@
 	let { data }: PageProps = $props();
 
 	const MODEL_STORAGE_KEY = 'persai-selected-model';
-	const defaultModel = `${data.models[0].providerId}$${data.models[0].id}`;
+	let defaultModel: string;
+	if (data.model?.length > 0) {
+		defaultModel = `${data.models[0].providerId}$${data.models[0].id}`;
+	}
 
 	function getInitialModel(): string {
 		if (!browser) return defaultModel;

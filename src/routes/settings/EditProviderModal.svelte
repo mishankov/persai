@@ -29,7 +29,7 @@
 	};
 
 	const onDelete = async () => {
-		await fetch(resolve('/settings'), {
+		await fetch(resolve('/api/providers'), {
 			method: 'DELETE',
 			body: `${localProvider.id}`
 		});
