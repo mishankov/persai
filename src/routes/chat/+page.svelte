@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { resolve } from '$app/paths';
 	import ExternalWidget from '$lib/ExternalWidget.svelte';
 	import Markdown from 'svelte-exmarkdown';
 	import { gfmPlugin } from 'svelte-exmarkdown/gfm';
@@ -52,7 +53,7 @@
 	const plugins = [gfmPlugin()];
 
 	async function clearChat() {
-		await fetch('/api/chat', {
+		await fetch(resolve('/api/chat'), {
 			method: 'DELETE',
 			body: `${data.chat.id}`
 		});
