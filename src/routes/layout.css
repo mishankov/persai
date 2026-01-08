@@ -6,3 +6,7 @@
 		light --default,
 		dark;
 }
+
+pre {
+	white-space: pre-wrap;
+}

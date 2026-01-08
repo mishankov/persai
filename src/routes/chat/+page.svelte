@@ -129,7 +129,7 @@
 						>
 							{#if part.type === 'text'}
 								<div class="chat-header">{message.role}</div>
-								<div class="chat-bubble chat-bubble-primary">
+								<div class="chat-bubble max-w-1/2 chat-bubble-primary wrap-break-word">
 									<Markdown md={part.text} {plugins} />
 								</div>
 							{:else if part.type === 'reasoning'}
@@ -255,8 +255,7 @@
 	}
 
 	.chat-container {
-		width: 750px;
-		max-width: 1000px;
+		width: clamp(300px, 100%, 1000 сюpx);
 		height: calc(100vh - 80px);
 
 		padding: 10px;
