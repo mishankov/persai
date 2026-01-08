@@ -255,7 +255,7 @@
 	}
 
 	.chat-container {
-		width: clamp(300px, 100%, 1000 сюpx);
+		width: clamp(300px, 100%, 1000px);
 		height: calc(100vh - 80px);
 
 		padding: 10px;
